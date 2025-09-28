@@ -9,9 +9,6 @@ import userRoutes from "./routes/user.js";
 // Create our server instance
 const app = express();
 
-// Allow other ports to connect
-import cors from "cors";
-
 app.use(cors({
     origin: [
         "https://chat-rooms-chi.vercel.app", // no trailing slash
