@@ -1,0 +1,106 @@
+// GET all conversations the logged-in user belongs to (include global chat)
+app.get("/conversations", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const conversations = await prisma.conversation.findMany({
+            where: {
+                OR: [
+                    { users: { some: { userId } } }, // normal conversations
+                    { id: 1 }                        // always include global chat
+                ]
+            },
+            include: {
+                users: { // flatten users
+                    select: {
+                        user: {
+                            select: { id: true, username: true, profilePicture: true }
+                        }
+                    }
+                },
+                _count: { select: { messages: true } }
+            },
+            orderBy: { createdAt: "desc" }
+        });
+
+        // flatten users array: users.user -> users
+        const formatted = conversations.map(convo => ({
+            ...convo,
+            users: convo.users.map(uc => uc.user)
+        }));
+
+        res.json({ conversations: formatted });
+    } catch (err) {
+        console.error("Error fetching conversations:", err);
+        res.status(500).json({ error: "Error fetching conversations" });
+    }
+});
+
+
+app.post("/conversations", authMiddleware, async (req, res) => {
+    const { name, userIds } = req.body; // userIds: array of other user IDs
+    const currentUserId = req.user.userId;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).json({ error: "No users specified" });
+    }
+
+    try {
+        // 1. Check for existing one-on-one conversation
+        if (userIds.length === 1) {
+            const existingConvos = await prisma.conversation.findMany({
+                where: {
+                    users: { some: { userId: currentUserId } },
+                },
+                include: { users: true, _count: { select: { users: true } } }
+            });
+
+            const existing = existingConvos.find(
+                c => c.users.some(u => u.userId === userIds[0]) && c._count.users === 2
+            );
+
+            if (existing) {
+                return res.json({ conversation: existing });
+            }
+        }
+
+        // 2. Create new conversation
+        const conversation = await prisma.conversation.create({
+            data: {
+                name: name || null, // optional group name
+                users: {
+                    create: [
+                        { user: { connect: { id: currentUserId } } },
+                        ...userIds.map(id => ({ user: { connect: { id } } }))
+                    ]
+                }
+            },
+            include: { users: true },
+        });
+
+        res.json({ conversation });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error creating conversation" });
+    }
+});
+
+// GET messages for a specific conversation
+app.get("/conversations/:id/messages", authMiddleware, async (req, res) => {
+    try {
+        const conversationId = Number(req.params.id);
+        if (!conversationId) return res.status(400).json({ error: "Invalid conversation ID" });
+
+        const messages = await prisma.message.findMany({
+            where: { conversationId },
+            orderBy: { createdAt: "asc" },
+            include: {
+                sender: { select: { id: true, username: true, profilePicture: true } }
+            },
+        });
+
+        res.json({ messages });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error fetching messages" });
+    }
+});
