@@ -1,4 +1,4 @@
-import { prisma } from "../../prisma/prisma.js"
+import { prisma } from "../prisma/prisma.js"
 
 // Get all conversation for user
 export const getConversations = async (req, res) => {

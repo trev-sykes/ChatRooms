@@ -152,7 +152,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/trev/Desktop/simple-chatroom/src/generated/prisma",
+      "value": "/Users/trev/Desktop/ChatRooms/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -166,7 +166,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/trev/Desktop/simple-chatroom/prisma/schema.prisma",
+    "sourceFilePath": "/Users/trev/Desktop/ChatRooms/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
