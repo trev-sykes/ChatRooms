@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card";
+import { Card, CardContent } from "../components/ui/Card";
 
 interface User {
     id: number;
