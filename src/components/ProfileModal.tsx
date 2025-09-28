@@ -15,6 +15,8 @@ interface Conversation {
     users: { id: number; username: string }[];
 }
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const ProfileModal: React.FC = () => {
     const { token } = useUser();
     const [selectedUser, setUser] = useState<User | null>(null);
@@ -29,13 +31,13 @@ export const ProfileModal: React.FC = () => {
 
         const fetchData = async () => {
             try {
-                const resUser = await fetch(`http://localhost:4000/users/${numericUserId}`, {
+                const resUser = await fetch(`${BASE_URL}/users/${numericUserId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const dataUser = await resUser.json();
                 if (resUser.ok) setUser(dataUser.user);
 
-                const resConvo = await fetch("http://localhost:4000/conversations", {
+                const resConvo = await fetch(`${BASE_URL}/conversations`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const dataConvo = await resConvo.json();
@@ -56,7 +58,7 @@ export const ProfileModal: React.FC = () => {
         if (!token || !selectedUser) return;
 
         try {
-            const res = await fetch("http://localhost:4000/conversations", {
+            const res = await fetch(`${BASE_URL}/conversations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -72,7 +74,7 @@ export const ProfileModal: React.FC = () => {
             if (!conversationId) throw new Error("No conversation ID received");
 
             if (text.trim()) {
-                await fetch("http://localhost:4000/messages", {
+                await fetch(`${BASE_URL}/messages`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

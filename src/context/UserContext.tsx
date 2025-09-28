@@ -15,6 +15,8 @@ interface UserContextProps {
     logout: () => void;
 }
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -26,7 +28,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         console.log("UserProvider useEffect triggered, token:", token); // ✅ log token
         if (!token) return;
 
-        fetch("http://localhost:4000/auth/me", {
+        fetch(`${BASE_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
@@ -54,7 +56,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     // Login function
     const login = async (username: string, password: string) => {
-        const res = await fetch("http://localhost:4000/auth/login", {
+        const res = await fetch(`${BASE_URL}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })

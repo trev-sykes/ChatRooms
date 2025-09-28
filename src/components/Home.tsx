@@ -17,6 +17,8 @@ interface Conversation {
     _count?: { messages: number };
 }
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const Home: React.FC = () => {
     const { user, token, logout } = useUser();
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -29,7 +31,7 @@ export const Home: React.FC = () => {
 
         const fetchConversations = async () => {
             try {
-                const res = await fetch("http://localhost:4000/conversations", {
+                const res = await fetch(`${BASE_URL}/conversations`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -54,7 +56,7 @@ export const Home: React.FC = () => {
         setIsModalOpen(false);
 
         try {
-            await fetch(`http://localhost:4000/users/${user.id}/profile-picture`, {
+            await fetch(`${BASE_URL}/users/${user.id}/profile-picture`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

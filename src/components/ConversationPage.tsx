@@ -23,6 +23,8 @@ interface Conversation {
     users: { id: number; username: string; profilePicture?: string }[];
 }
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const ConversationPage: React.FC = () => {
     const navigate = useNavigate();
     const { token, user } = useUser();
@@ -37,7 +39,7 @@ export const ConversationPage: React.FC = () => {
         if (!token || !numericConversationId) return;
         try {
             const res = await fetch(
-                `http://localhost:4000/conversations/${numericConversationId}/messages`,
+                `${BASE_URL}/conversations/${numericConversationId}/messages`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const data = await res.json();
@@ -50,7 +52,7 @@ export const ConversationPage: React.FC = () => {
     const fetchConversationName = async () => {
         if (!token || !numericConversationId) return;
         try {
-            const res = await fetch(`http://localhost:4000/conversations`, {
+            const res = await fetch(`${BASE_URL}/conversations`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -77,7 +79,7 @@ export const ConversationPage: React.FC = () => {
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !token || !numericConversationId) return;
         try {
-            const res = await fetch("http://localhost:4000/messages", {
+            const res = await fetch(`${BASE_URL}/messages`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

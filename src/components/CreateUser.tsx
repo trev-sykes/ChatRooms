@@ -21,7 +21,7 @@ export const CreateUser: React.FC = () => {
         setStatus(null);
 
         try {
-            const res = await fetch("http://localhost:4000/auth/create", {
+            const res = await fetch("https://chatrooms-bspq.onrender.com/auth/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password, profilePicture }),
@@ -80,9 +80,9 @@ export const CreateUser: React.FC = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 className={`mt-4 text-sm text-center ${status.toLowerCase().includes("error") ||
-                                        status.toLowerCase().includes("wrong")
-                                        ? "text-red-400"
-                                        : "text-green-400"
+                                    status.toLowerCase().includes("wrong")
+                                    ? "text-red-400"
+                                    : "text-green-400"
                                     }`}
                             >
                                 {status}
