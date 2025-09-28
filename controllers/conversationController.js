@@ -59,17 +59,16 @@ export const getMessagesFromConversation = async (req, res) => {
 export const createConversation = async (req, res) => {
     const { name, userIds } = req.body;
     const currentUserId = req.user.userId;
-    if (!userIds || !Array.isArray(userIds) || userIds.length == 0) {
-        res.status(400).json({ error: "No users specified" });
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).json({ error: "No users specified" });
     }
+
     try {
-        // 1. Check for existing 1 on 1 conversations 
-        // 1. Check for existing 1-on-1 conversations 
+        // Check for existing 1-on-1 conversation
         if (userIds.length === 1) {
             const existingConvos = await prisma.conversation.findMany({
-                where: {
-                    users: { some: { userId: currentUserId } }
-                },
+                where: { users: { some: { userId: currentUserId } } },
                 include: { users: true, _count: { select: { users: true } } }
             });
 
@@ -77,15 +76,13 @@ export const createConversation = async (req, res) => {
                 c.users.some(u => u.userId === userIds[0]) && c._count.users === 2
             );
 
-            if (existing) {
-                return res.json({ conversation: existing }); // <— don’t forget return
-            }
+            if (existing) return res.json({ conversation: existing });
         }
 
-        // 2. Create a conversation
+        // Create new conversation
         const conversation = await prisma.conversation.create({
             data: {
-                name: name || null,
+                ...(name ? { name } : {}),
                 users: {
                     create: [
                         { user: { connect: { id: currentUserId } } },
@@ -94,10 +91,11 @@ export const createConversation = async (req, res) => {
                 }
             },
             include: { users: true }
-        })
-        res.json({ conversation })
+        });
+
+        res.json({ conversation });
     } catch (error) {
-        console.error(error.message);
+        console.error("Create conversation error:", error);
         res.status(500).json({ error: "Error creating conversation" });
     }
-}
+};

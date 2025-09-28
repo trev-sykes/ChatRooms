@@ -9,7 +9,6 @@ import { ConversationItem } from "./coversation/ConversationItem";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
 
-
 interface Conversation {
     id: number;
     name?: string | null;
@@ -74,7 +73,7 @@ export const Home: React.FC = () => {
 
 
     return (
-        <PageWrapper centered bgColor="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <PageWrapper centered>
             <div className="relative w-full max-w-6xl px-6 flex flex-col items-center gap-10">
                 {/* Background blobs */}
                 {/* Background blobs */}
@@ -90,17 +89,6 @@ export const Home: React.FC = () => {
                     transition={{ delay: 0.5, duration: 2.5, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }}
                     className="absolute w-[20rem] h-[20rem] bg-purple-500/20 rounded-full blur-3xl bottom-10 -right-28 z-0"
                 />
-
-                {/* Welcome Header */}
-                <motion.h1
-                    initial={{ opacity: 0, y: -30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.9 }}
-                    className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
-                >
-                    Welcome, {user?.username || "Guest"}!
-                </motion.h1>
-
                 {user ? (
                     <div className="w-full flex flex-col gap-8 lg:grid lg:grid-cols-3 lg:gap-10">
                         {/* User Card (sidebar on desktop) */}

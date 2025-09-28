@@ -45,7 +45,7 @@ export const CreateUser: React.FC = () => {
     };
 
     return (
-        <PageWrapper centered bgColor="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <PageWrapper centered>
             {/* Background Orbs */}
             <motion.div
                 initial={{ scale: 0 }}

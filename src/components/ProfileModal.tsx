@@ -3,6 +3,7 @@ import { useUser } from "../context/UserContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../components/ui/Card";
+import { PageWrapper } from "./layout/PageWrapper";
 
 interface User {
     id: number;
@@ -92,13 +93,15 @@ export const ProfileModal: React.FC = () => {
     };
 
     if (!selectedUser) return (
-        <div className="text-gray-300 text-center mt-32 text-lg">
-            Loading profile...
-        </div>
+        <PageWrapper centered bgColor="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+            <div className="text-gray-300 text-center mt-32 text-lg">
+                Loading profile...
+            </div>
+        </PageWrapper>
     );
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 backdrop-blur-sm px-4">
+        <PageWrapper centered>
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -160,6 +163,6 @@ export const ProfileModal: React.FC = () => {
                     </CardContent>
                 </Card>
             </motion.div>
-        </div>
+        </PageWrapper>
     );
 };

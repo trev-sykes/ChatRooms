@@ -1,5 +1,6 @@
 // components/layout/PageWrapper.tsx
 import React from "react";
+import { Logo } from "../Logo";
 
 interface PageWrapperProps {
     children: React.ReactNode;
@@ -10,7 +11,7 @@ interface PageWrapperProps {
 
 export const PageWrapper: React.FC<PageWrapperProps> = ({
     children,
-    bgColor = "bg-gray-50",
+    bgColor = "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950",
     centered = false,
     maxWidth = "max-w-[1600px]",
 }) => {
@@ -25,6 +26,7 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
                 font-sans
             `}
         >
+            <Logo />
             {children}
         </div>
     );

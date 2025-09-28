@@ -2,6 +2,7 @@ import { useUser } from "../context/UserContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "./button/Button";
+import { PageWrapper } from "./layout/PageWrapper";
 
 export const Landing: React.FC = () => {
     const { user } = useUser();
@@ -10,7 +11,7 @@ export const Landing: React.FC = () => {
     if (user) return <Navigate to="/home" replace />;
 
     return (
-        <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden px-6">
+        <PageWrapper centered>
             {/* Animated gradient orb */}
             <motion.div
                 initial={{ scale: 0 }}
@@ -24,7 +25,6 @@ export const Landing: React.FC = () => {
                 transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
                 className="absolute w-[25rem] h-[25rem] bg-purple-500/20 rounded-full blur-3xl bottom-10 -right-32"
             />
-
             {/* Headline */}
             <motion.h1
                 initial={{ opacity: 0, y: -40 }}
@@ -71,6 +71,6 @@ export const Landing: React.FC = () => {
             <p className="absolute bottom-6 text-sm text-gray-400 text-center">
                 Built with ❤️ by Satoshi • Fullstack Dev
             </p>
-        </div>
+        </PageWrapper>
     );
 };
