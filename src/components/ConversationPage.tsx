@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Button } from "./button/Button";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
+import { TextInput } from "./input/TextInput";
 
 interface Message {
     id: number;
@@ -194,13 +195,12 @@ export const ConversationPage: React.FC = () => {
 
                         {/* Input Footer */}
                         <CardFooter className="flex gap-3 flex-col sm:flex-row w-full mt-2">
-                            <input
-                                type="text"
-                                placeholder="Type your message..."
+                            <TextInput
                                 value={newMessage}
-                                onChange={e => setNewMessage(e.target.value)}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                placeholder="Type your message..."
                                 onKeyDown={e => e.key === "Enter" && handleSendMessage()}
-                                className="flex-1 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition"
+
                             />
                             <Button onClick={handleSendMessage} variant="primary" className="w-full sm:w-auto">
                                 Send
