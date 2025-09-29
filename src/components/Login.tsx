@@ -8,35 +8,54 @@ import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card
 import { Button } from "./button/Button";
 import { BackgroundOrbs } from "./BackgroundOrbs";
 
+/**
+ * Login page component for user authentication
+ */
 export const Login: React.FC = () => {
-    const [username, setUsername] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
-    const [error, setError] = useState<string | null>(null);
-    const [loginLoading, setLoginLoading] = useState<boolean>(false);
+    // Form state
+    const [username, setUsername] = useState<string>(""); // Stores the username input
+    const [password, setPassword] = useState<string>(""); // Stores the password input
 
+    // UI state
+    const [error, setError] = useState<string | null>(null); // Stores error messages for display
+    const [loginLoading, setLoginLoading] = useState<boolean>(false); // Indicates login in progress
+
+    // Authentication context
     const { login } = useUser();
+
+    // Navigation for redirecting on successful login
     const navigate = useNavigate();
 
+    /**
+     * Handles the login process when the user clicks the "Log In" button
+     * - Clears any existing token from localStorage
+     * - Resets error state
+     * - Sets loading state during async operation
+     * - Calls the login function from context
+     * - Redirects to home page on success
+     * - Displays error messages on failure
+     */
     const handleLogin = async () => {
-        localStorage.removeItem("token");
-        setError(null);
-        setLoginLoading(true);
+        localStorage.removeItem("token"); // Clear any stale token
+        setError(null); // Reset previous errors
+        setLoginLoading(true); // Show loading state
+
         try {
-            await login(username, password);
-            navigate("/"); // redirect to home on success
+            await login(username, password); // Attempt login via context function
+            navigate("/"); // Redirect to home on successful login
         } catch (err: any) {
-            setError(err.message || "Login failed. Please try again.");
+            setError(err.message || "Login failed. Please try again."); // Display error message
         } finally {
-            setLoginLoading(false);
+            setLoginLoading(false); // Reset loading state
         }
     };
 
     return (
-        <PageWrapper centered >
-            {/* Background Orbs */}
+        <PageWrapper centered>
+            {/* Background visual elements for the login page */}
             <BackgroundOrbs variant="login" />
 
-            {/* Login Card */}
+            {/* Login Card container with animation */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -44,14 +63,16 @@ export const Login: React.FC = () => {
                 className="relative w-full max-w-md z-10"
             >
                 <Card className="backdrop-blur-xl">
+                    {/* Card header */}
                     <CardHeader>
                         <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-pink-500 to-yellow-400 bg-clip-text text-transparent">
                             Welcome Back
                         </h1>
-
                     </CardHeader>
 
+                    {/* Card content */}
                     <CardContent>
+                        {/* Display error messages if any */}
                         {error && (
                             <motion.p
                                 initial={{ opacity: 0 }}
@@ -62,6 +83,7 @@ export const Login: React.FC = () => {
                             </motion.p>
                         )}
 
+                        {/* Input fields */}
                         <div className="space-y-4">
                             <TextInput
                                 value={username}
@@ -75,6 +97,8 @@ export const Login: React.FC = () => {
                                 type="password"
                             />
                         </div>
+
+                        {/* Login button */}
                         <Button
                             variant="login"
                             onClick={handleLogin}
@@ -85,6 +109,7 @@ export const Login: React.FC = () => {
                         </Button>
                     </CardContent>
 
+                    {/* Card footer */}
                     <CardFooter>
                         <p className="w-full text-sm text-gray-300 text-center">
                             Don’t have an account?{" "}

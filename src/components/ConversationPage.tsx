@@ -7,6 +7,7 @@ import { Button } from "./button/Button";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
 import { TextInput } from "./input/TextInput";
 import { BackgroundOrbs } from "./BackgroundOrbs";
+import { fetchMessages, fetchConversationName, sendMessage } from "../api/conversations";
 
 interface Message {
     id: number;
@@ -19,121 +20,96 @@ interface Message {
     createdAt: string;
 }
 
-interface Conversation {
-    id: number;
-    name: string | null;
-    users: { id: number; username: string; profilePicture?: string }[];
-}
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export const ConversationPage: React.FC = () => {
     const navigate = useNavigate();
     const { token, user } = useUser();
     const { conversationId } = useParams<{ conversationId: string }>();
+
+    // Component state
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [conversationName, setConversationName] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
 
-
     const numericConversationId = Number(conversationId);
 
-    const fetchMessages = async () => {
-        if (!token || !numericConversationId) return;
-        setLoading(true); // start loader
-        try {
-            const res = await fetch(
-                `${BASE_URL}/conversations/${numericConversationId}/messages`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
-            if (res.ok) setMessages(data.messages);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false); // start loader
-        }
-    };
-
-    const fetchConversationName = async () => {
-        if (!token || !numericConversationId) return;
-        try {
-            const res = await fetch(`${BASE_URL}/conversations`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = await res.json();
-            if (res.ok) {
-                const conversation = data.conversations.find(
-                    (conv: Conversation) => conv.id === numericConversationId
-                );
-                setConversationName(
-                    conversation?.name ||
-                    conversation.users
-                        .filter((u: any) => u.id !== user?.id)
-                        .map((u: any) => u.username)
-                        .join(", ") || "Conversation"
-                );
-            } else {
-                setConversationName("Conversation");
-            }
-        } catch (err) {
-            console.error(err);
-            setConversationName("Conversation");
-        }
-    };
-
+    /**
+     * Sends a new message.
+     * Optimistically updates UI with a temporary message until server confirms.
+     */
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !token || !numericConversationId) return;
+
+        const tempMessage: Message = {
+            id: Date.now(),
+            text: newMessage,
+            sender: { id: user!.id, username: user!.username },
+            createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, tempMessage]);
+        setNewMessage("");
         setSending(true);
+
         try {
-            const res = await fetch(`${BASE_URL}/messages`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ text: newMessage, conversationId: numericConversationId }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setMessages(prev => [...prev, data.message]);
-                setNewMessage("");
-            }
+            const message = await sendMessage(numericConversationId, token, newMessage);
+            setMessages(prev => prev.map(msg => msg.id === tempMessage.id ? message : msg));
         } catch (err) {
             console.error(err);
+            // Remove temporary message on failure
+            setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
         } finally {
             setSending(false);
         }
     };
 
+    /**
+     * Loads messages and conversation name on mount or when conversation changes.
+     * Sets up interval to refresh messages every 60 seconds.
+     */
     useEffect(() => {
-        fetchMessages();
-        fetchConversationName();
-        const interval = setInterval(fetchMessages, 60000);
+        if (!token || !numericConversationId) return;
+
+        const loadData = async () => {
+            try {
+                setLoading(true);
+                const [msgs, name] = await Promise.all([
+                    fetchMessages(numericConversationId, token),
+                    fetchConversationName(numericConversationId, token, user!.id),
+                ]);
+                setMessages(msgs);
+                setConversationName(name);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+
+        const interval = setInterval(() => fetchMessages(numericConversationId, token).then(setMessages), 60000);
         return () => clearInterval(interval);
     }, [token, conversationId]);
 
     return (
-        <PageWrapper centered >
-            {/* Blobs */}
+        <PageWrapper centered>
             <BackgroundOrbs variant="chat" />
+
             <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6">
-                {/* Header */}
+                {/* Conversation header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                     className="relative flex items-center h-12"
                 >
-                    {/* Title centered */}
                     <h2 className="absolute left-1/2 transform -translate-x-1/2 text-2xl sm:text-3xl font-bold text-white">
                         {conversationName}
                     </h2>
                 </motion.div>
 
-                {/* Messages Card */}
+                {/* Messages list */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -144,21 +120,9 @@ export const ConversationPage: React.FC = () => {
                             {loading ? (
                                 <div className="flex justify-center py-6">
                                     <div className="flex space-x-2">
-                                        <motion.span
-                                            className="w-3 h-3 bg-white rounded-full"
-                                            animate={{ y: [0, -8, 0] }}
-                                            transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                                        />
-                                        <motion.span
-                                            className="w-3 h-3 bg-white rounded-full"
-                                            animate={{ y: [0, -8, 0] }}
-                                            transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                                        />
-                                        <motion.span
-                                            className="w-3 h-3 bg-white rounded-full"
-                                            animate={{ y: [0, -8, 0] }}
-                                            transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                                        />
+                                        <motion.span className="w-3 h-3 bg-white rounded-full" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
+                                        <motion.span className="w-3 h-3 bg-white rounded-full" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} />
+                                        <motion.span className="w-3 h-3 bg-white rounded-full" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} />
                                     </div>
                                 </div>
                             ) : (
@@ -178,10 +142,7 @@ export const ConversationPage: React.FC = () => {
                                                 onClick={() => navigate(`/user/${msg.sender.id}`)}
                                             />
                                         )}
-                                        <div
-                                            className={`px-4 py-2 rounded-2xl max-w-[70%] sm:max-w-[60%] ${msg.sender.id === user?.id ? "bg-indigo-600 text-white self-end" : "bg-white/20 text-white"
-                                                }`}
-                                        >
+                                        <div className={`px-4 py-2 rounded-2xl max-w-[70%] sm:max-w-[60%] ${msg.sender.id === user?.id ? "bg-indigo-600 text-white self-end" : "bg-white/20 text-white"}`}>
                                             <strong>{msg.sender.username}</strong>: {msg.text}
                                             <div className="text-xs text-gray-300 mt-1">{new Date(msg.createdAt).toLocaleString()}</div>
                                         </div>
@@ -190,15 +151,13 @@ export const ConversationPage: React.FC = () => {
                             )}
                         </CardContent>
 
-
-                        {/* Input Footer */}
+                        {/* Message input */}
                         <CardFooter className="flex gap-3 flex-col sm:flex-row w-full mt-2">
                             <TextInput
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 placeholder="Type your message..."
                                 onKeyDown={e => e.key === "Enter" && handleSendMessage()}
-
                             />
                             <Button
                                 onClick={handleSendMessage}

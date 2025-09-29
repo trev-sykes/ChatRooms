@@ -9,6 +9,10 @@ import { ConversationItem } from "./coversation/ConversationItem";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
 import { BackgroundOrbs } from "./BackgroundOrbs";
+import { fetchConversations as apiFetchConversations } from "../api/conversations";
+import { avatarOptions } from "../utils/avatarOptions";
+import { Loader } from "./Loader";
+import { getAvatarUrl } from "../utils/avatars";
 
 interface Conversation {
     id: number;
@@ -17,79 +21,46 @@ interface Conversation {
     _count?: { messages: number };
 }
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export const Home: React.FC = () => {
-    const { user, token, logout } = useUser();
+    const { user, token, logout, updateAvatar } = useUser();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [avatarUrl, setAvatarUrl] = useState<string>("");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const navigate = useNavigate();
 
+    // Fetch conversations
     useEffect(() => {
         if (!token) {
             setLoading(false);
             return;
         }
 
-        const fetchConversations = async () => {
+        const loadConversations = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`${BASE_URL}/conversations`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    // Add a small delay to ensure smooth animation
-                    setTimeout(() => {
-                        setConversations(data.conversations);
-                    }, 300);
-                }
+                const convos = await apiFetchConversations(token);
+                setTimeout(() => setConversations(convos), 300);
             } catch (err) {
-                console.error(err);
+                console.error("Error fetching conversations:", err);
             } finally {
-                // Keep loading state for a bit longer to allow for smooth transition
-                setTimeout(() => {
-                    setLoading(false);
-                }, 500);
+                setTimeout(() => setLoading(false), 500);
             }
         };
 
-        fetchConversations();
+        loadConversations();
     }, [token]);
 
-    const goToChat = (conversationId: number) =>
-        navigate(`/conversation/${conversationId}`);
-
-    const updateAvatar = async (customUrl?: string) => {
-        if (!user) return;
-
-        const avatarToUse = customUrl || `https://i.pravatar.cc/100?u=${Math.random()}`;
-        setAvatarUrl(avatarToUse);
-        setIsModalOpen(false);
-
-        try {
-            await fetch(`${BASE_URL}/users/${user.id}/profile-picture`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ profilePicture: avatarToUse }),
-            });
-        } catch (err) {
-            console.error(err);
-        }
-    };
+    const goToChat = (conversationId: number) => navigate(`/conversation/${conversationId}`);
 
     return (
         <PageWrapper centered>
             <div className="relative w-full max-w-6xl px-6 flex flex-col items-center gap-10">
                 <BackgroundOrbs variant="home" />
+
                 {user ? (
                     <div className="w-full flex flex-col gap-8 lg:grid lg:grid-cols-3 lg:gap-10">
-                        {/* User Card (sidebar on desktop) */}
+                        {/* User Info Card */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -100,16 +71,19 @@ export const Home: React.FC = () => {
                                 <CardHeader>{user.username}</CardHeader>
                                 <CardContent>
                                     <div className="flex flex-col items-center gap-4">
-                                        {user.profilePicture && (
+                                        {user.profilePicture ? (
                                             <motion.img
                                                 initial={{ scale: 0.8, opacity: 0 }}
                                                 animate={{ scale: 1, opacity: 1 }}
                                                 transition={{ delay: 0.5, duration: 0.5 }}
-                                                src={avatarUrl || user.profilePicture}
+                                                src={user.profilePicture}
                                                 alt={user.username}
                                                 className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shadow-lg"
                                             />
+                                        ) : (
+                                            <Loader />
                                         )}
+
                                         <div className="flex flex-col sm:flex-row gap-4 z-10">
                                             <Button
                                                 onClick={() => setIsModalOpen(true)}
@@ -127,7 +101,7 @@ export const Home: React.FC = () => {
                             </Card>
                         </motion.div>
 
-                        {/* Conversations Card with fixed height during loading */}
+                        {/* Conversations List */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -136,43 +110,12 @@ export const Home: React.FC = () => {
                         >
                             <Card>
                                 <CardHeader>Your Conversations</CardHeader>
-                                <motion.div
-                                    layout
-                                    transition={{ duration: 0.6, ease: "easeInOut" }}
-                                >
+                                <motion.div layout transition={{ duration: 0.6, ease: "easeInOut" }}>
                                     <CardContent>
-                                        <div
-                                            className={`transition-all duration-500 ease-in-out ${loading ? 'min-h-[200px]' : 'min-h-0'
-                                                }`}
-                                        >
+                                        <div className={`transition-all duration-500 ease-in-out ${loading ? 'min-h-[200px]' : 'min-h-0'}`}>
                                             <AnimatePresence mode="wait">
                                                 {loading ? (
-                                                    <motion.div
-                                                        key="loading"
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        transition={{ duration: 0.3 }}
-                                                        className="flex justify-center items-center py-12"
-                                                    >
-                                                        <div className="flex space-x-2">
-                                                            <motion.span
-                                                                className="w-3 h-3 bg-white rounded-full"
-                                                                animate={{ y: [0, -8, 0] }}
-                                                                transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                                                            />
-                                                            <motion.span
-                                                                className="w-3 h-3 bg-white rounded-full"
-                                                                animate={{ y: [0, -8, 0] }}
-                                                                transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                                                            />
-                                                            <motion.span
-                                                                className="w-3 h-3 bg-white rounded-full"
-                                                                animate={{ y: [0, -8, 0] }}
-                                                                transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                                                            />
-                                                        </div>
-                                                    </motion.div>
+                                                    <Loader />
                                                 ) : (
                                                     <motion.div
                                                         key="conversations"
@@ -186,11 +129,7 @@ export const Home: React.FC = () => {
                                                                     key={convo.id}
                                                                     initial={{ opacity: 0, x: -20 }}
                                                                     animate={{ opacity: 1, x: 0 }}
-                                                                    transition={{
-                                                                        delay: index * 0.1,
-                                                                        duration: 0.4,
-                                                                        ease: "easeOut"
-                                                                    }}
+                                                                    transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
                                                                 >
                                                                     <ConversationItem
                                                                         name={convo.name}
@@ -243,31 +182,49 @@ export const Home: React.FC = () => {
                     </motion.p>
                 )}
 
-                {/* Avatar Modal */}
-                <Modal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title="Update Avatar"
-                >
+                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Generate Random Avatar">
+                    {/* Random avatar options */}
+                    <div className="grid grid-cols-4 gap-4 mb-4">
+                        {avatarOptions.map((option) => (
+                            <button
+                                key={option.name}
+                                onClick={() => {
+                                    const randomAvatar = getAvatarUrl(undefined, option.name);
+                                    updateAvatar(randomAvatar, option.name);
+                                    setIsModalOpen(false);
+                                }}
+                                className="w-16 h-16 rounded-full overflow-hidden border-2 hover:border-indigo-500 transition-colors duration-200"
+                            >
+                                <img
+                                    src={option.preview}
+                                    alt={option.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Optional custom URL input */}
                     <TextInput
                         value={avatarUrl}
                         onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="Avatar URL"
+                        placeholder="Custom Avatar URL"
+                        className="mb-2"
                     />
+
+                    {/* Update button for custom URL */}
                     <Button
-                        onClick={() => updateAvatar(avatarUrl)}
+                        onClick={() => {
+                            updateAvatar(avatarUrl);
+                            setIsModalOpen(false);
+                        }}
                         variant="primary"
-                        className="w-full mt-2"
+                        className="w-full"
                     >
                         Update
                     </Button>
-                    <p className="text-center">or</p>
-                    <Button
-                        onClick={() => updateAvatar()}
-                    >
-                        Generate Random
-                    </Button>
                 </Modal>
+
             </div>
         </PageWrapper>
     );
