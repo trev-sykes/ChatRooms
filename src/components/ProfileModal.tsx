@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../components/ui/Card";
 import { PageWrapper } from "./layout/PageWrapper";
+import { Button } from "./button/Button";
 
 interface User {
     id: number;
@@ -23,6 +24,7 @@ export const ProfileModal: React.FC = () => {
     const [selectedUser, setUser] = useState<User | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [text, setText] = useState("");
+    const [sending, setSending] = useState(false);
     const { userId } = useParams<{ userId: string }>();
     const numericUserId = Number(userId);
     const navigate = useNavigate();
@@ -57,7 +59,7 @@ export const ProfileModal: React.FC = () => {
 
     const handleStartConversation = async () => {
         if (!token || !selectedUser) return;
-
+        setSending(true);
         try {
             const res = await fetch(`${BASE_URL}/conversations`, {
                 method: "POST",
@@ -89,11 +91,13 @@ export const ProfileModal: React.FC = () => {
         } catch (err) {
             console.error(err);
             alert("Failed to initiate conversation");
+        } finally {
+            setSending(false);
         }
     };
 
     if (!selectedUser) return (
-        <PageWrapper centered bgColor="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <PageWrapper centered>
             <div className="text-gray-300 text-center mt-32 text-lg">
                 Loading profile...
             </div>
@@ -110,12 +114,12 @@ export const ProfileModal: React.FC = () => {
             >
                 <Card className="backdrop-blur-xl relative flex flex-col items-center gap-5 p-6">
                     {/* Close button */}
-                    <button
+                    <Button
                         onClick={() => navigate(-1)}
                         className="absolute top-4 right-4 text-white/80 hover:text-white transition text-lg font-semibold"
                     >
                         ✕
-                    </button>
+                    </Button>
 
                     {/* Avatar */}
                     <motion.img
@@ -150,14 +154,15 @@ export const ProfileModal: React.FC = () => {
                                     onKeyDown={(e) => e.key === "Enter" && handleStartConversation()}
                                     className="w-full p-3 rounded-xl bg-white/20 placeholder-gray-300 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition"
                                 />
-                                <motion.button
+                                <Button
                                     onClick={handleStartConversation}
-                                    whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(99, 102, 241, 0.5)" }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md"
+                                    variant="primary"
+                                    className="w-full sm:w-auto"
+                                    loading={sending}
+                                    loadingText="Sending..."
                                 >
                                     Start Conversation
-                                </motion.button>
+                                </Button>
                             </>
                         )}
                     </CardContent>

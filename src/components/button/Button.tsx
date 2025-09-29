@@ -6,6 +6,9 @@ type ButtonProps = {
     onClick: () => void;
     variant?: "primary" | "secondary";
     className?: string;
+    disabled?: boolean;              // 👈 allow manual disable
+    loading?: boolean;               // 👈 new: loading state
+    loadingText?: string;            // 👈 optional text while loading
 };
 
 export const Button: React.FC<ButtonProps> = ({
@@ -13,9 +16,12 @@ export const Button: React.FC<ButtonProps> = ({
     onClick,
     variant = "primary",
     className,
+    disabled = false,
+    loading = false,
+    loadingText = "Submitting...",   // 👈 default
 }) => {
     const baseStyles =
-        "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md";
+        "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed";
 
     const variantStyles = {
         primary:
@@ -27,11 +33,12 @@ export const Button: React.FC<ButtonProps> = ({
     return (
         <motion.button
             onClick={onClick}
+            disabled={disabled || loading}   // 👈 prevent clicks
             className={`${baseStyles} ${variantStyles[variant]} ${className || ""}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={!loading ? { scale: 1.05 } : {}}
+            whileTap={!loading ? { scale: 0.95 } : {}}
         >
-            {children}
+            {loading ? loadingText : children} {/* 👈 swap label */}
         </motion.button>
     );
 };

@@ -34,6 +34,7 @@ export const ConversationPage: React.FC = () => {
     const [newMessage, setNewMessage] = useState("");
     const [conversationName, setConversationName] = useState<string>("");
     const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
 
 
     const numericConversationId = Number(conversationId);
@@ -84,6 +85,7 @@ export const ConversationPage: React.FC = () => {
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !token || !numericConversationId) return;
+        setSending(true);
         try {
             const res = await fetch(`${BASE_URL}/messages`, {
                 method: "POST",
@@ -100,6 +102,8 @@ export const ConversationPage: React.FC = () => {
             }
         } catch (err) {
             console.error(err);
+        } finally {
+            setSending(false);
         }
     };
 
@@ -111,7 +115,7 @@ export const ConversationPage: React.FC = () => {
     }, [token, conversationId]);
 
     return (
-        <PageWrapper centered bgColor="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <PageWrapper centered >
             <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6">
                 {/* Header */}
                 <motion.div
@@ -120,15 +124,6 @@ export const ConversationPage: React.FC = () => {
                     transition={{ duration: 0.5 }}
                     className="relative flex items-center h-12"
                 >
-                    {/* Back button */}
-                    <Button
-                        variant="secondary"
-                        onClick={() => navigate(-1)}
-                        className="absolute left-0"
-                    >
-                        ←
-                    </Button>
-
                     {/* Title centered */}
                     <h2 className="absolute left-1/2 transform -translate-x-1/2 text-2xl sm:text-3xl font-bold text-white">
                         {conversationName}
@@ -202,7 +197,13 @@ export const ConversationPage: React.FC = () => {
                                 onKeyDown={e => e.key === "Enter" && handleSendMessage()}
 
                             />
-                            <Button onClick={handleSendMessage} variant="primary" className="w-full sm:w-auto">
+                            <Button
+                                onClick={handleSendMessage}
+                                variant="primary"
+                                className="w-full sm:w-auto"
+                                loading={sending}
+                                loadingText="Sending..."
+                            >
                                 Send
                             </Button>
                         </CardFooter>
