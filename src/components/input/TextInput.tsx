@@ -26,7 +26,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 onChange={onChange}
                 placeholder={placeholder}
                 className={`
-                    w-full px-4 py-3 rounded-xl text-sm
+                    w-full px-4 py-3 rounded-xl text-base
                     bg-white/10 text-white placeholder-gray-400
                     backdrop-blur-md outline-none
                     transition-all duration-300
