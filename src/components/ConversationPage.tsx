@@ -6,6 +6,7 @@ import { PageWrapper } from "./layout/PageWrapper";
 import { Button } from "./button/Button";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
 import { TextInput } from "./input/TextInput";
+import { BackgroundOrbs } from "./BackgroundOrbs";
 
 interface Message {
     id: number;
@@ -116,6 +117,8 @@ export const ConversationPage: React.FC = () => {
 
     return (
         <PageWrapper centered >
+            {/* Blobs */}
+            <BackgroundOrbs variant="chat" />
             <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6">
                 {/* Header */}
                 <motion.div

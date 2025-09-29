@@ -5,7 +5,7 @@ export const Logo = () => (
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="flex items-center gap-3 select-none"
+        className="flex items-center gap-3 select-none pb-15 pt-10"
     >
         <motion.h1
             initial={{ opacity: 0, x: -10 }}

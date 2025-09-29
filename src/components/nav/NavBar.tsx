@@ -12,13 +12,12 @@ export const NavBar: React.FC = () => {
     const [conversationName, setConversationName] = useState<string | null>(null);
     const location = useLocation();
     const navigate = useNavigate();
-    const { token, user, logout } = useUser(); // Added logout from useUser
+    const { token, user, logout } = useUser();
 
-    // Define navigation items
     const navItems = user
         ? [
             { to: "/home", label: "Home" },
-            { to: "#", label: "Logout", onClick: logout }, // Add logout item
+            { to: "#", label: "Logout", onClick: logout },
         ]
         : [
             { to: "/home", label: "Home" },
@@ -26,13 +25,11 @@ export const NavBar: React.FC = () => {
             { to: "/create", label: "Sign Up" },
         ];
 
-    // Check if we're on a conversation page
     const isConversationPage = location.pathname.startsWith("/conversation/");
     const conversationId = isConversationPage
         ? Number(location.pathname.split("/conversation/")[1])
         : null;
 
-    // Fetch conversation name for the current conversation
     useEffect(() => {
         if (!isConversationPage || !token || !conversationId) {
             setConversationName(null);
@@ -70,10 +67,9 @@ export const NavBar: React.FC = () => {
     }, [isConversationPage, conversationId, token, user]);
 
     return (
-        <nav className="sticky top-0 z-50 flex justify-center">
-            <div className="w-[90%] md:w-3/4 bg-white/10 backdrop-blur-md rounded-2xl shadow-lg">
+        <nav className="sticky top-5 z-50 flex justify-center">
+            <div className="w-[90%] md:w-[66%] bg-white/10 backdrop-blur-md rounded-2xl shadow-lg relative">
                 <div className="flex justify-between items-center px-4 sm:px-6 h-14">
-                    {/* Logo / Brand */}
                     <NavLink
                         to="/"
                         className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
@@ -95,7 +91,6 @@ export const NavBar: React.FC = () => {
                         </motion.div>
                     </NavLink>
 
-                    {/* Desktop Menu */}
                     <div className="hidden md:flex space-x-6 items-center">
                         {isConversationPage && (
                             <button
@@ -110,7 +105,7 @@ export const NavBar: React.FC = () => {
                             <NavLink
                                 key={item.to}
                                 to={item.to}
-                                onClick={item.onClick} // Handle logout click
+                                onClick={item.onClick}
                                 className={({ isActive }) =>
                                     `px-3 py-2 rounded-lg text-sm font-medium transition ${isActive && !isConversationPage && item.to !== "#"
                                         ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
@@ -128,7 +123,6 @@ export const NavBar: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Mobile Button */}
                     <div className="md:hidden">
                         <button
                             onClick={() => setIsOpen(!isOpen)}
@@ -145,7 +139,7 @@ export const NavBar: React.FC = () => {
 
                 {/* Mobile Menu */}
                 {isOpen && (
-                    <div className="md:hidden px-2 pb-3 space-y-1 bg-white/10 backdrop-blur-md rounded-b-2xl">
+                    <div className="md:hidden absolute top-14 left-0 right-0 bg-black/90 backdrop-blur-md rounded-b-2xl shadow-lg z-50 px-2 pb-3 space-y-1">
                         {isConversationPage && (
                             <button
                                 onClick={() => {
@@ -164,7 +158,7 @@ export const NavBar: React.FC = () => {
                                 to={item.to}
                                 onClick={() => {
                                     setIsOpen(false);
-                                    if (item.onClick) item.onClick(); // Handle logout click
+                                    if (item.onClick) item.onClick();
                                 }}
                                 className={({ isActive }) =>
                                     `block px-3 py-2 rounded-lg text-base font-medium transition ${isActive && !isConversationPage && item.to !== "#"

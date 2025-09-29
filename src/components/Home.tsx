@@ -8,6 +8,7 @@ import { Modal } from "./modal/Modal";
 import { ConversationItem } from "./coversation/ConversationItem";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
+import { BackgroundOrbs } from "./BackgroundOrbs";
 
 interface Conversation {
     id: number;
@@ -85,20 +86,7 @@ export const Home: React.FC = () => {
     return (
         <PageWrapper centered>
             <div className="relative w-full max-w-6xl px-6 flex flex-col items-center gap-10">
-                {/* Background blobs */}
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 360 }}
-                    transition={{ duration: 2, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }}
-                    className="absolute w-[25rem] h-[25rem] bg-indigo-500/20 rounded-full blur-3xl top-10 -left-32 z-0"
-                />
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1, rotate: -360 }}
-                    transition={{ delay: 0.5, duration: 2.5, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }}
-                    className="absolute w-[20rem] h-[20rem] bg-purple-500/20 rounded-full blur-3xl bottom-10 -right-28 z-0"
-                />
-
+                <BackgroundOrbs variant="home" />
                 {user ? (
                     <div className="w-full flex flex-col gap-8 lg:grid lg:grid-cols-3 lg:gap-10">
                         {/* User Card (sidebar on desktop) */}

@@ -5,6 +5,8 @@ import { TextInput } from "./input/TextInput";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card";
+import { Button } from "./button/Button";
+import { BackgroundOrbs } from "./BackgroundOrbs";
 
 export const CreateUser: React.FC = () => {
     const [username, setUsername] = useState("");
@@ -47,19 +49,7 @@ export const CreateUser: React.FC = () => {
     return (
         <PageWrapper centered>
             {/* Background Orbs */}
-            <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 1 }}
-                className="absolute w-[28rem] h-[28rem] bg-indigo-500/20 rounded-full blur-3xl top-20 -left-28 z-0"
-            />
-            <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, duration: 1 }}
-                className="absolute w-[22rem] h-[22rem] bg-purple-500/20 rounded-full blur-3xl bottom-16 -right-20 z-0"
-            />
-
+            <BackgroundOrbs variant="auth" />
             {/* Create Account Card */}
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -109,15 +99,15 @@ export const CreateUser: React.FC = () => {
                                 placeholder="Profile Picture URL (optional)"
                             />
 
-                            <motion.button
+                            <Button
                                 type="submit"
-                                disabled={loading}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.97 }}
-                                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
+                                variant="cta"
+                                loading={loading}
+                                loadingText="Creating Account..."
                             >
-                                {loading ? "Creating Account..." : "Sign Up"}
-                            </motion.button>
+                                Sign Up
+                            </Button>
+
                         </form>
                     </CardContent>
 

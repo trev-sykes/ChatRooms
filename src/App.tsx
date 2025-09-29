@@ -14,45 +14,47 @@ function App() {
   return (
     <UserProvider>
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <div className="min-h-screen w-screen overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
           <NavBar />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route
-              path="/home"
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/create"
-              element={
-                <PublicRoute>
-                  <CreateUser />
-                </PublicRoute>
-              }
-            />
-            <Route path="/user/:userId" element={<ProfileModal />} />
-            <Route
-              path="/conversation/:conversationId"
-              element={
-                <ProtectedRoute>
-                  <ConversationPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <div className="pt-4">
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route
+                path="/home"
+                element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/create"
+                element={
+                  <PublicRoute>
+                    <CreateUser />
+                  </PublicRoute>
+                }
+              />
+              <Route path="/user/:userId" element={<ProfileModal />} />
+              <Route
+                path="/conversation/:conversationId"
+                element={
+                  <ProtectedRoute>
+                    <ConversationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
         </div>
       </Router>
     </UserProvider>
