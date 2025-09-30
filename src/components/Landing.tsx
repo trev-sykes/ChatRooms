@@ -13,20 +13,6 @@ export const Landing: React.FC = () => {
 
     return (
         <PageWrapper centered>
-            {/* Orbs only on md+ */}
-            <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="hidden md:block absolute w-[30rem] h-[30rem] bg-indigo-500/20 rounded-full blur-3xl top-20 -left-40"
-            />
-            <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
-                className="hidden md:block absolute w-[25rem] h-[25rem] bg-purple-500/20 rounded-full blur-3xl bottom-10 -right-32"
-            />
-
             <Card className="max-w-2xl w-full bg-transparent">
                 <CardContent className="flex flex-col items-center text-center gap-6 p-8">
                     {/* Headline */}
@@ -36,8 +22,7 @@ export const Landing: React.FC = () => {
                         transition={{ duration: 0.6 }}
                         className="text-4xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
                     >
-                        Real-time Chat.
-                        <span className="block">Made Simple.</span>
+                        Chat. Made Simple.
                     </motion.h1>
 
                     {/* Subheading */}
@@ -72,6 +57,6 @@ export const Landing: React.FC = () => {
                     Built with ❤️ by Satoshi • Fullstack Dev
                 </CardFooter>
             </Card>
-        </PageWrapper>
+        </PageWrapper >
     );
 };

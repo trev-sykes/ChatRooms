@@ -1,5 +1,3 @@
-// src/components/ui/Card.tsx
-
 type CardProps = {
     children: React.ReactNode;
     className?: string;
@@ -8,7 +6,7 @@ type CardProps = {
 export function Card({ children, className }: CardProps) {
     return (
         <div
-            className={`rounded-2xl bg-slate-800/80 shadow-lg border border-slate-700 ${className}`}
+            className={`w-full rounded-2xl bg-slate-800/80 shadow-lg border border-slate-700 ${className || ""}`}
         >
             {children}
         </div>
@@ -18,7 +16,7 @@ export function Card({ children, className }: CardProps) {
 export function CardHeader({ children, className }: CardProps) {
     return (
         <div
-            className={`border-b border-slate-700 px-4 py-2 font-semibold text-white ${className}`}
+            className={`border-b border-slate-700 px-4 py-2 font-semibold text-white ${className || ""}`}
         >
             {children}
         </div>
@@ -26,13 +24,13 @@ export function CardHeader({ children, className }: CardProps) {
 }
 
 export function CardContent({ children, className }: CardProps) {
-    return <div className={`p-4 text-gray-200 ${className}`}>{children}</div>;
+    return <div className={`p-4 text-gray-200 ${className || ""}`}>{children}</div>;
 }
 
 export function CardFooter({ children, className }: CardProps) {
     return (
         <div
-            className={`border-t border-slate-700 px-4 py-2 text-sm text-gray-400 ${className}`}
+            className={`border-t border-slate-700 px-4 py-2 text-sm text-gray-400 ${className || ""}`}
         >
             {children}
         </div>

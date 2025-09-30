@@ -1,6 +1,5 @@
 // components/layout/PageWrapper.tsx
 import React from "react";
-import { Logo } from "../Logo";
 
 interface PageWrapperProps {
     children: React.ReactNode;
@@ -18,10 +17,6 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
                 px-4 mx-auto font-sans
             `}
         >
-            {/* Keep logo at the top */}
-            <div className="py-6 mx-auto w-64">
-                <Logo />
-            </div>
 
             {/* Main content */}
             <div

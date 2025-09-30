@@ -14,9 +14,9 @@ function App() {
   return (
     <UserProvider>
       <Router>
-        <div className="min-h-screen w-screen overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
           <NavBar />
-          <div className="pt-4">
+          <main className="flex-1 flex flex-col pt-4">
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route
@@ -54,10 +54,10 @@ function App() {
               />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </div>
+          </main>
         </div>
       </Router>
-    </UserProvider>
+    </UserProvider >
   );
 }
 

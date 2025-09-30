@@ -32,10 +32,12 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         "https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg";
 
     return (
-        <motion.li
+        <motion.div
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
             className={`cursor-pointer ${className || ""}`}
+            role="button"
+            tabIndex={0}
         >
             <Card className="bg-white/5 backdrop-blur-sm hover:shadow-lg hover:shadow-indigo-300/30 transition-all duration-300 hover:scale-105">
                 <CardContent className="flex items-center gap-4">
@@ -66,10 +68,10 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 </CardContent>
                 {messageCount !== undefined && (
                     <CardFooter className="text-xs text-gray-500">
-                        Last updated just now {/* Placeholder, you could wire real data */}
+                        Last updated just now {/* Placeholder, wire real data later */}
                     </CardFooter>
                 )}
             </Card>
-        </motion.li>
+        </motion.div>
     );
 };
