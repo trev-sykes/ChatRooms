@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "./button/Button";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardContent, CardFooter } from "./ui/Card";
+import { BackgroundOrbs } from "./BackgroundOrbs";
 
 export const Landing: React.FC = () => {
     const { user } = useUser();
@@ -13,6 +14,7 @@ export const Landing: React.FC = () => {
 
     return (
         <PageWrapper centered>
+            <BackgroundOrbs variant="chat" />
             <Card className="max-w-2xl w-full bg-transparent">
                 <CardContent className="flex flex-col items-center text-center gap-4 p-4 sm:gap-6 sm:p-8">
                     {/* Wrapper for Headline and Hero Illustration */}
