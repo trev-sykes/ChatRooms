@@ -2,7 +2,7 @@ import { Router } from "express";
 import * as messageController from "../controllers/messageController.js"
 import authMiddleware from "./middleware/authMiddleware.js";
 
-const messageRoutes = new Router();
+const messageRoutes = Router();
 
 // Protected routes
 

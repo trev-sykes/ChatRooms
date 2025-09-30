@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js";
 import messageRoutes from "./routes/message.js";
 import conversationRoutes from "./routes/conversation.js";
 import userRoutes from "./routes/user.js";
+import healthRoutes from "./routes/health.js";
 
 // Create our server instance
 const app = express();
@@ -22,6 +23,10 @@ app.use(express.json());
 
 // Port
 const PORT = process.env.PORT || 4000;
+
+// Mount health routes
+app.use("/health", healthRoutes);
+
 // Mount auth routes
 app.use("/auth", authRoutes);
 

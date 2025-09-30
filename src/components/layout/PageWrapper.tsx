@@ -11,13 +11,7 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
     centered = false,
 }) => {
     return (
-        <div
-            className={`
-                flex flex-col min-h-screen w-full max-w-[1600px]
-                px-4 mx-auto font-sans
-            `}
-        >
-
+        <div className="flex flex-col w-full max-w-[1600px] px-4 mx-auto font-sans">
             {/* Main content */}
             <div
                 className={`

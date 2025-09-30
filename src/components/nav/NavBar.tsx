@@ -67,23 +67,23 @@ export const NavBar: React.FC = () => {
     }, [isConversationPage, conversationId, token, user]);
 
     return (
-        <nav className="sticky top-5 z-50 flex justify-center">
-            <div className="w-[90%] md:w-[66%] bg-white/10 backdrop-blur-md rounded-2xl shadow-lg relative">
-                <div className="flex justify-between items-center px-4 sm:px-6 h-14">
+        <nav className="sticky top-2 z-50 flex justify-center">
+            <div className="w-[90%] sm:w-[90%] md:w-[66%] bg-white/10 backdrop-blur-md rounded-2xl shadow-lg relative">
+                <div className="flex justify-between items-center px-3 sm:px-6 h-12 sm:h-14">
                     <NavLink
                         to="/"
-                        className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
+                        className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
                     >
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
-                            className="flex items-center gap-3 select-none"
+                            className="flex items-center gap-2 sm:gap-3 select-none"
                         >
                             <motion.img
                                 src={logo}
                                 alt="App Logo"
-                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl shadow-lg"
+                                className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl shadow-lg"
                                 initial={{ rotate: -15, opacity: 0, scale: 0.8 }}
                                 animate={{ rotate: 0, opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.6, ease: "easeOut" }}
@@ -91,11 +91,11 @@ export const NavBar: React.FC = () => {
                         </motion.div>
                     </NavLink>
 
-                    <div className="hidden md:flex space-x-6 items-center">
+                    <div className="hidden md:flex space-x-4 items-center">
                         {isConversationPage && (
                             <button
                                 onClick={() => navigate(-1)}
-                                className="px-3 py-2 rounded-lg text-sm font-medium transition text-gray-200 hover:bg-white/10 hover:text-white flex items-center"
+                                className="px-2 py-1.5 rounded-lg text-sm font-medium transition text-gray-200 hover:bg-white/10 hover:text-white flex items-center"
                             >
                                 <ArrowLeft className="h-5 w-5 mr-1" />
                                 Back
@@ -107,7 +107,7 @@ export const NavBar: React.FC = () => {
                                 to={item.to}
                                 onClick={item.onClick}
                                 className={({ isActive }) =>
-                                    `px-3 py-2 rounded-lg text-sm font-medium transition ${isActive && !isConversationPage && item.to !== "#"
+                                    `px-2 py-1.5 rounded-lg text-sm font-medium transition ${isActive && !isConversationPage && item.to !== "#"
                                         ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
                                         : "text-gray-200 hover:bg-white/10 hover:text-white"
                                     }`
@@ -126,7 +126,7 @@ export const NavBar: React.FC = () => {
                     <div className="md:hidden">
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="p-2 rounded-md hover:bg-white/10 focus:outline-none"
+                            className="p-1.5 rounded-md hover:bg-white/10 focus:outline-none"
                         >
                             {isOpen ? (
                                 <X className="h-6 w-6 text-white" />
@@ -139,14 +139,14 @@ export const NavBar: React.FC = () => {
 
                 {/* Mobile Menu */}
                 {isOpen && (
-                    <div className="md:hidden absolute top-14 left-0 right-0 bg-black/90 backdrop-blur-md rounded-b-2xl shadow-lg z-50 px-2 pb-3 space-y-1">
+                    <div className="md:hidden absolute top-12 sm:top-14 left-0 right-0 bg-black/80 backdrop-blur-md rounded-b-2xl shadow-lg z-50 px-2 pb-2 space-y-0.5">
                         {isConversationPage && (
                             <button
                                 onClick={() => {
                                     navigate(-1);
                                     setIsOpen(false);
                                 }}
-                                className="block px-3 py-2 rounded-lg text-base font-medium transition text-gray-200 hover:bg-white/10 hover:text-white w-full text-left flex items-center"
+                                className="block px-2 py-1.5 rounded-lg text-sm font-medium transition text-gray-200 hover:bg-white/10 hover:text-white w-full text-left flex items-center"
                             >
                                 <ArrowLeft className="h-5 w-5 mr-1" />
                                 Back
@@ -161,7 +161,7 @@ export const NavBar: React.FC = () => {
                                     if (item.onClick) item.onClick();
                                 }}
                                 className={({ isActive }) =>
-                                    `block px-3 py-2 rounded-lg text-base font-medium transition ${isActive && !isConversationPage && item.to !== "#"
+                                    `block px-2 py-1.5 rounded-lg text-sm font-medium transition ${isActive && !isConversationPage && item.to !== "#"
                                         ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
                                         : "text-gray-200 hover:bg-white/10 hover:text-white"
                                     }`
@@ -171,7 +171,7 @@ export const NavBar: React.FC = () => {
                             </NavLink>
                         ))}
                         {isConversationPage && conversationName && (
-                            <div className="px-3 py-2 text-base font-medium text-white">
+                            <div className="px-2 py-1.5 text-sm font-medium text-gray-400 italic">
                                 {conversationName}
                             </div>
                         )}

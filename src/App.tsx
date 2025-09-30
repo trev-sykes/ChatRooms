@@ -9,8 +9,11 @@ import { CreateUser } from './components/CreateUser';
 import { ProfileModal } from './components/ProfileModal';
 import { ConversationPage } from './components/ConversationPage';
 import { NavBar } from './components/nav/NavBar';
+import { useWakeServer } from './hooks/useWakeServer';
+import { ServerStatusModal } from './components/ServerStatusModal';
 
 function App() {
+  const isHealthy: null | boolean = useWakeServer();
   return (
     <UserProvider>
       <Router>
@@ -55,6 +58,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <ServerStatusModal status={isHealthy} />
         </div>
       </Router>
     </UserProvider >
