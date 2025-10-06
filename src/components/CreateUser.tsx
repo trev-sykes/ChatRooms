@@ -2,53 +2,101 @@ import { useState } from "react";
 import { useUser } from "../context/UserContext";
 import { PageWrapper } from "./layout/PageWrapper";
 import { TextInput } from "./input/TextInput";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card";
 import { Button } from "./button/Button";
 import { BackgroundOrbs } from "./BackgroundOrbs";
+import { GoogleLogin } from "@react-oauth/google";
 import { createUser } from "../api/auth";
+import axios from "axios";
+
 export const CreateUser: React.FC = () => {
+    const apiUrl = import.meta.env.VITE_API_BASE_URL;
+
     // Component state
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [profilePicture, setProfilePicture] = useState("");
-    const [status, setStatus] = useState<string | null>(null); // Status messages (success/error)
-    const [loading, setLoading] = useState(false); // Loading state for form submission
+    const [status, setStatus] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    const { login } = useUser();
+    const { login, loginWithGoogle } = useUser();
+    const navigate = useNavigate();
+
+    /**
+     * Handles Google Sign-In for account creation
+     */
+    const handleGoogleSuccess = async (credentialResponse: any) => {
+        setLoading(true);
+        setStatus(null);
+
+        try {
+            const { credential } = credentialResponse;
+
+            if (!credential) {
+                throw new Error("No credential received from Google");
+            }
+
+            // Send credential to backend for signup/login
+            const res = await axios.post(
+                `${apiUrl}/auth/google`,
+                { credential },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            const { token, user } = res.data;
+
+            if (!token) {
+                throw new Error("No token received from server");
+            }
+
+            // Log in with Google credentials
+            loginWithGoogle(token, user);
+
+            // Redirect to home
+            navigate("/home");
+        } catch (error: any) {
+            console.error("Google sign-up failed:", error);
+            const errorMessage = error.response?.data?.message
+                || error.response?.data?.error
+                || error.message
+                || "Google sign-up failed. Please try again.";
+
+            setStatus(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     /**
      * Handles form submission to create a new user account.
-     * Uses the createUser API function and logs in immediately on success.
      */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setStatus(null); // Reset status before submission
+        setStatus(null);
 
         try {
-            // Attempt to create a new user account
             await createUser(username, password, profilePicture);
-
-            // Automatically log in the user after account creation
             await login(username, password);
-
             setStatus("Account created successfully!");
         } catch (err: any) {
-            // Display error message if account creation or login fails
             setStatus(err.message || "Something went wrong.");
         } finally {
-            setLoading(false); // Reset loading state
+            setLoading(false);
         }
     };
 
     return (
         <PageWrapper centered>
-            {/* Decorative background */}
             <BackgroundOrbs variant="auth" />
 
-            {/* Main card container */}
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -56,32 +104,44 @@ export const CreateUser: React.FC = () => {
                 className="relative w-full max-w-md z-10"
             >
                 <Card className="backdrop-blur-xl">
-                    {/* Card header with gradient title */}
                     <CardHeader>
                         <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                             Create Your Account
                         </h1>
                     </CardHeader>
 
-                    {/* Form content */}
                     <CardContent>
-                        {/* Status message for success/error */}
                         {status && (
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 className={`mt-4 text-sm text-center ${status.toLowerCase().includes("error") ||
-                                        status.toLowerCase().includes("wrong")
-                                        ? "text-red-400"
-                                        : "text-green-400"
+                                    status.toLowerCase().includes("wrong") ||
+                                    status.toLowerCase().includes("failed")
+                                    ? "text-red-400"
+                                    : "text-green-400"
                                     }`}
                             >
                                 {status}
                             </motion.p>
                         )}
 
-                        {/* User creation form */}
-                        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                        {/* Google Sign-In Button */}
+                        <div className="flex justify-center mb-4">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => setStatus("Google sign-up failed.")}
+                                useOneTap={false}
+                                auto_select={false}
+                            />
+                        </div>
+
+                        <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
+                            <span className="px-2">or</span>
+                        </div>
+
+                        {/* Traditional signup form */}
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <TextInput
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
@@ -112,7 +172,6 @@ export const CreateUser: React.FC = () => {
                         </form>
                     </CardContent>
 
-                    {/* Footer with login link */}
                     <CardFooter>
                         <p className="w-full text-sm text-gray-300 text-center">
                             Already have an account?{" "}

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ArrowLeft } from "lucide-react";
 import { useUser } from "../../context/UserContext";
-import logo from "../../../public/favicon.png";
 import { motion } from "framer-motion";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -81,7 +80,7 @@ export const NavBar: React.FC = () => {
                             className="flex items-center gap-2 sm:gap-3 select-none"
                         >
                             <motion.img
-                                src={logo}
+                                src="/favicon.png"  // just reference it as a URL
                                 alt="App Logo"
                                 className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl shadow-lg"
                                 initial={{ rotate: -15, opacity: 0, scale: 0.8 }}

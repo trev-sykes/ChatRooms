@@ -11,57 +11,61 @@ import { ConversationPage } from './components/ConversationPage';
 import { NavBar } from './components/nav/NavBar';
 import { useWakeServer } from './hooks/useWakeServer';
 import { ServerStatusModal } from './components/ServerStatusModal';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function App() {
+  const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const isHealthy: null | boolean = useWakeServer();
   return (
-    <UserProvider>
-      <Router>
-        <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
-          <NavBar />
-          <main className="flex-1 flex flex-col pt-4">
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route
-                path="/home"
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/login"
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/create"
-                element={
-                  <PublicRoute>
-                    <CreateUser />
-                  </PublicRoute>
-                }
-              />
-              <Route path="/user/:userId" element={<ProfileModal />} />
-              <Route
-                path="/conversation/:conversationId"
-                element={
-                  <ProtectedRoute>
-                    <ConversationPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-          <ServerStatusModal status={isHealthy} />
-        </div>
-      </Router>
-    </UserProvider >
+    <GoogleOAuthProvider clientId={VITE_GOOGLE_CLIENT_ID}>
+      <UserProvider>
+        <Router>
+          <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
+            <NavBar />
+            <main className="flex-1 flex flex-col pt-4">
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={
+                    <PublicRoute>
+                      <Login />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/create"
+                  element={
+                    <PublicRoute>
+                      <CreateUser />
+                    </PublicRoute>
+                  }
+                />
+                <Route path="/user/:userId" element={<ProfileModal />} />
+                <Route
+                  path="/conversation/:conversationId"
+                  element={
+                    <ProtectedRoute>
+                      <ConversationPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+            <ServerStatusModal status={isHealthy} />
+          </div>
+        </Router>
+      </UserProvider >
+    </GoogleOAuthProvider>
   );
 }
 

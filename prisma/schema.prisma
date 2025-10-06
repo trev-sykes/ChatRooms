@@ -10,7 +10,9 @@ datasource db {
 model User {
   id             Int     @id @default(autoincrement())
   username       String  @unique
-  password       String
+  email          String? @unique // add this
+  password       String? // make optional for Google users
+  googleId       String? @unique // add this
   profilePicture String?
 
   messages      Message[]

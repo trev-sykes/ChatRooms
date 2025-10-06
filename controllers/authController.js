@@ -1,9 +1,69 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../prisma/prisma.js";
+import { OAuth2Client } from "google-auth-library";
+
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+export const googleAuth = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) return res.status(400).json({ error: "Missing Google credential" });
+
+        // 1. Verify Google token
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, picture, sub: googleId } = payload;
+
+        if (!email) return res.status(400).json({ error: "Google account has no email" });
+
+        // 2. Find or create user
+        let user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            // Auto-create a new user
+            user = await prisma.user.create({
+                data: {
+                    email,
+                    username: name || email.split("@")[0],
+                    googleId,
+                    profilePicture: picture,
+                },
+            });
+        }
+
+        // 3. Issue your own JWT
+        const token = jwt.sign(
+            { userId: user.id, username: user.username },
+            JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        // 4. Return JWT + user info
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                profilePicture: user.profilePicture,
+            },
+        });
+    } catch (error) {
+        console.error("Google Auth Error:", error);
+        res.status(500).json({ error: "Google login failed" });
+    }
+};
+
 
 export const signup = async (req, res) => {
     const { username, password, profilePicture } = req.body;

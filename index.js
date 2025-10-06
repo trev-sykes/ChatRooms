@@ -14,7 +14,8 @@ app.use(cors({
     origin: [
         "https://chat-rooms-chi.vercel.app", // no trailing slash
         "http://localhost:5173" // for local dev if needed
-    ]
+    ],
+    credentials: true // Important for cookies/auth headers
 }));
 
 
