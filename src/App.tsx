@@ -5,9 +5,9 @@ import { PublicRoute } from './components/PublicRoute';
 import { Landing } from './components/Landing';
 import { Home } from './components/Home';
 import { Login } from './components/Login';
-import { CreateUser } from './components/SignUp';
+import { SignUp } from './components/SignUp';
 import { ProfileModal } from './components/modals/ProfileModal';
-import { ConversationPage } from './components/Conversation';
+import { Conversation } from './components/Conversation';
 import { NavBar } from './components/ui/NavBar';
 import { useWakeServer } from './hooks/useWakeServer';
 import { ServerStatusToast } from './components/toasts/ServerStatusToast';
@@ -46,7 +46,7 @@ function App() {
                   path="/create"
                   element={
                     <PublicRoute>
-                      <CreateUser />
+                      <SignUp />
                     </PublicRoute>
                   }
                 />
@@ -55,7 +55,7 @@ function App() {
                   path="/conversation/:conversationId"
                   element={
                     <ProtectedRoute>
-                      <ConversationPage />
+                      <Conversation />
                     </ProtectedRoute>
                   }
                 />
