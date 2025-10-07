@@ -5,13 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/Button";
 import { TextInput } from "./ui/TextInput";
 import { Modal } from "./ui/Modal";
-import { ConversationItem } from "./coversation/ConversationItem";
+import { ConversationItem } from "./ui/ConversationItem";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
 import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { fetchConversations as apiFetchConversations } from "../api/conversations";
 import { avatarOptions } from "../utils/avatarOptions";
-import { Loader } from "./Loader";
+import { Loader } from "./ui/Loader";
 import { getAvatarUrl } from "../utils/avatars";
 
 interface Conversation {

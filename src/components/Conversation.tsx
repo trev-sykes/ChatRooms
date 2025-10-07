@@ -4,7 +4,7 @@ import { useUser } from "../context/UserContext";
 import { motion } from "framer-motion";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Button } from "./ui/Button";
-import { Card, CardContent, CardFooter } from "../components/ui/Card";
+import { Card, CardContent, CardFooter } from "./ui/Card";
 import { TextInput } from "./ui/TextInput";
 import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { fetchMessages, fetchConversationName, sendMessage } from "../api/conversations";
@@ -20,7 +20,7 @@ interface Message {
     createdAt: string;
 }
 
-export const ConversationPage: React.FC = () => {
+export const Conversation: React.FC = () => {
     const navigate = useNavigate();
     const { token, user } = useUser();
     const { conversationId } = useParams<{ conversationId: string }>();
@@ -158,6 +158,7 @@ export const ConversationPage: React.FC = () => {
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 placeholder="Type your message..."
                                 onKeyDown={e => e.key === "Enter" && handleSendMessage()}
+                                disabled={sending}
                             />
                             <Button
                                 onClick={handleSendMessage}

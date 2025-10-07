@@ -4,14 +4,14 @@ import { PageWrapper } from "./layout/PageWrapper";
 import { TextInput } from "./ui/TextInput";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card";
+import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import { createUser } from "../api/auth";
 import axios from "axios";
 
-export const CreateUser: React.FC = () => {
+export const SignUp: React.FC = () => {
     const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
     // Component state

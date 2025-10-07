@@ -1,7 +1,7 @@
 import React from "react";
 import { useUser } from "../../context/UserContext";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardFooter } from "../ui/Card";
+import { Card, CardContent, CardFooter } from "./Card";
 
 type User = {
     id: number;

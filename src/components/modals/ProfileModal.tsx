@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "../components/ui/Card";
-import { PageWrapper } from "./layout/PageWrapper";
-import { Button } from "./ui/Button";
+import { Card, CardContent } from "../ui/Card";
+import { PageWrapper } from "../layout/PageWrapper";
+import { Button } from "../ui/Button";
 
 interface User {
     id: number;
@@ -153,6 +153,7 @@ export const ProfileModal: React.FC = () => {
                                     onChange={(e) => setText(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleStartConversation()}
                                     className="w-full p-3 rounded-xl bg-white/20 placeholder-gray-300 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                    disabled={sending}
                                 />
                                 <Button
                                     onClick={handleStartConversation}
