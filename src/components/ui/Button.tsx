@@ -3,9 +3,10 @@ import React from "react";
 
 type ButtonProps = {
     children: React.ReactNode;
-    onClick?: () => void;             // 👈 make optional for submit buttons
-    type?: "button" | "submit" | "reset"; // 👈 new: button type
+    onClick?: () => void;
+    type?: "button" | "submit" | "reset";
     variant?: "primary" | "secondary" | "cta" | "login";
+    size?: "sm" | "md" | "lg";      // 👈 add size prop
     className?: string;
     disabled?: boolean;
     loading?: boolean;
@@ -15,15 +16,22 @@ type ButtonProps = {
 export const Button: React.FC<ButtonProps> = ({
     children,
     onClick,
-    type = "button",                   // 👈 default is "button"
+    type = "button",
     variant = "primary",
+    size = "md",                    // 👈 default size
     className,
     disabled = false,
     loading = false,
     loadingText = "Submitting...",
 }) => {
     const baseStyles =
-        "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed";
+        "rounded-xl font-semibold text-sm transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed";
+
+    const sizeStyles = {
+        sm: "px-3 py-1 text-sm",
+        md: "px-6 py-3 text-sm",
+        lg: "px-8 py-4 text-lg",
+    };
 
     const variantStyles = {
         primary:
@@ -32,16 +40,16 @@ export const Button: React.FC<ButtonProps> = ({
             "bg-gray-200 text-gray-900 hover:bg-gray-300 hover:shadow-md hover:shadow-gray-400/30",
         cta:
             "w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-lg hover:opacity-90 transition-all",
-        login:  // 👈 new
+        login:
             "w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-lg hover:opacity-90 transition-all",
     };
 
     return (
         <motion.button
-            type={type}                     // 👈 now supported
+            type={type}
             onClick={onClick}
             disabled={disabled || loading}
-            className={`${baseStyles} ${variantStyles[variant]} ${className || ""}`}
+            className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className || ""}`}
             whileHover={!loading ? { scale: 1.05 } : {}}
             whileTap={!loading ? { scale: 0.95 } : {}}
         >

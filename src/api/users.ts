@@ -26,3 +26,22 @@ export const updateUserAvatar = async (
 
     return data;
 };
+
+/**
+ * Fetch all users in the system
+ * @param token - Auth token
+ * @returns Array of users with id, username, and optional profilePicture
+ */
+export const fetchAllUsers = async (token: string) => {
+    const res = await fetch(`${BASE_URL}/users`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch users");
+
+    return data.users; // should return [{ id, username, profilePicture }, ...]
+};
+

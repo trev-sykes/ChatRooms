@@ -10,22 +10,43 @@ datasource db {
 model User {
   id             Int     @id @default(autoincrement())
   username       String  @unique
-  email          String? @unique // add this
-  password       String? // make optional for Google users
-  googleId       String? @unique // add this
+  email          String? @unique
+  password       String?
+  googleId       String? @unique
   profilePicture String?
 
-  messages      Message[]
-  conversations UserConversation[]
+  // 🌐 Global role (app-wide permissions)
+  role UserRole @default(USER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  messages             Message[]
+  conversations        UserConversation[]
+  createdConversations Conversation[]     @relation("CreatedConversations")
+}
+
+// 🌍 Enum for system-level roles
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
 }
 
 model Conversation {
   id        Int      @id @default(autoincrement())
-  name      String? // optional: for group chats
+  name      String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // optional: track who created the conversation
+  createdById Int?
+  createdBy   User? @relation("CreatedConversations", fields: [createdById], references: [id])
 
   messages Message[]
   users    UserConversation[]
+
+  @@index([createdAt])
 }
 
 model UserConversation {
@@ -33,20 +54,44 @@ model UserConversation {
   userId         Int
   conversationId Int
 
+  // 🛡️ Conversation-level role
+  role     ConversationRole @default(MEMBER)
+  joinedAt DateTime         @default(now())
+
   user         User         @relation(fields: [userId], references: [id])
   conversation Conversation @relation(fields: [conversationId], references: [id])
 
-  @@unique([userId, conversationId]) // prevent duplicates
+  @@unique([userId, conversationId])
+  @@index([conversationId])
+  @@index([userId])
+}
+
+// 🎭 Enum for chat-level roles
+enum ConversationRole {
+  OWNER
+  ADMIN
+  MEMBER
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   text      String
-  createdAt DateTime @default(now())
+  type      MessageType @default(TEXT)
+  createdAt DateTime    @default(now())
 
   senderId       Int
   conversationId Int
 
   sender       User         @relation(fields: [senderId], references: [id])
   conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+// 📜 Enum for message content types
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
 }

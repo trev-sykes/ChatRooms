@@ -26,14 +26,45 @@ export const getConversations = async (req, res) => {
         // flatten users array: users.user -> users
         const formatted = conversations.map(conversation => ({
             ...conversation,
-            users: conversation.users.map(uc => uc.user)
+            users: conversation.users.map(uc => ({
+                id: uc.user.id,
+                username: uc.user.username,
+                profilePicture: uc.user.profilePicture,
+                role: uc.role, // <-- include this!
+            }))
         }));
+
         res.json({ conversations: formatted });
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ error: "Error getting conversations" });
     }
 }
+// controllers/conversationController.ts
+export const getConversationUsers = async (req, res) => {
+    const conversationId = Number(req.params.id);
+
+    try {
+        const users = await prisma.userConversation.findMany({
+            where: { conversationId },
+            include: {
+                user: { select: { id: true, username: true, profilePicture: true } }
+            }
+        });
+
+        const formatted = users.map(uc => ({
+            id: uc.user.id,
+            username: uc.user.username,
+            profilePicture: uc.user.profilePicture,
+            role: uc.role
+        }));
+
+        res.json({ users: formatted });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error fetching conversation users" });
+    }
+};
 
 // Get messages for a convsersation
 export const getMessagesFromConversation = async (req, res) => {
@@ -80,22 +111,98 @@ export const createConversation = async (req, res) => {
         }
 
         // Create new conversation
+        const otherUserIds = userIds.filter(id => id !== currentUserId);
+
         const conversation = await prisma.conversation.create({
             data: {
                 ...(name ? { name } : {}),
                 users: {
                     create: [
-                        { user: { connect: { id: currentUserId } } },
-                        ...userIds.map(id => ({ user: { connect: { id } } }))
+                        // Creator as OWNER
+                        { user: { connect: { id: currentUserId } }, role: "OWNER" },
+
+                        // Other users as MEMBER
+                        ...otherUserIds.map(id => ({ user: { connect: { id } }, role: "MEMBER" }))
                     ]
                 }
             },
             include: { users: true }
         });
 
+
+
         res.json({ conversation });
     } catch (error) {
         console.error("Create conversation error:", error);
         res.status(500).json({ error: "Error creating conversation" });
+    }
+};
+
+/**
+ * Add a member to a conversation
+ * Only OWNER or ADMIN can do this
+ */
+export const addMemberToConversation = async (req, res) => {
+    const { conversationId, userIdToAdd } = req.body;
+    const currentUserId = req.user.userId;
+
+    if (!conversationId || !userIdToAdd) {
+        return res.status(400).json({ error: "conversationId and userIdToAdd are required" });
+    }
+
+    try {
+        // ✅ Verify current user is in the conversation
+        const requesterMembership = await prisma.userConversation.findUnique({
+            where: {
+                userId_conversationId: { userId: currentUserId, conversationId },
+            },
+        });
+
+        if (!requesterMembership) {
+            return res.status(403).json({ error: "You are not a member of this conversation" });
+        }
+
+        // ✅ Only OWNER or ADMIN can add members
+        if (!["OWNER", "ADMIN"].includes(requesterMembership.role)) {
+            return res.status(403).json({ error: "You are not allowed to add members" });
+        }
+
+        // ✅ Check if the user to add already exists in conversation
+        const existing = await prisma.userConversation.findUnique({
+            where: {
+                userId_conversationId: { userId: userIdToAdd, conversationId },
+            },
+        });
+        if (existing) {
+            return res.status(400).json({ error: "User already in conversation" });
+        }
+
+        // ✅ Add user as MEMBER
+        const newMember = await prisma.userConversation.create({
+            data: {
+                userId: userIdToAdd,
+                conversationId,
+                role: "MEMBER",
+            },
+            include: {
+                user: {
+                    select: { id: true, username: true, profilePicture: true },
+                },
+            },
+        });
+
+        // ✅ Update updatedAt timestamp
+        await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() },
+        });
+
+        res.json({
+            message: "User added successfully",
+            member: newMember,
+        });
+    } catch (error) {
+        console.error("❌ Error adding member:", error);
+        res.status(500).json({ error: "Error adding member to conversation" });
     }
 };

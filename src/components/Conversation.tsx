@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { motion } from "framer-motion";
@@ -7,7 +7,25 @@ import { Button } from "./ui/Button";
 import { Card, CardContent, CardFooter } from "./ui/Card";
 import { TextInput } from "./ui/TextInput";
 import { BackgroundOrbs } from "./ui/BackgroundOrbs";
-import { fetchMessages, fetchConversationName, sendMessage } from "../api/conversations";
+import { AdminModal } from "./modals/AdminModal";
+import { AddUsersModal } from "./modals/AddUsersModal";
+import { LeaveConversationModal } from "./modals/LeaveConversationModal";
+import {
+    fetchMessages,
+    fetchConversationName,
+    sendMessage,
+    fetchConversationUsers,
+    addUsersToConversation,
+    removeUserFromConversation,
+    leaveConversation
+} from "../api/conversations";
+
+interface ConversationUser {
+    id: number;
+    username: string;
+    profilePicture?: string;
+    role: "OWNER" | "ADMIN" | "MEMBER";
+}
 
 interface Message {
     id: number;
@@ -20,24 +38,66 @@ interface Message {
     createdAt: string;
 }
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const Conversation: React.FC = () => {
     const navigate = useNavigate();
     const { token, user } = useUser();
     const { conversationId } = useParams<{ conversationId: string }>();
-
-    // Component state
+    const [participants, setParticipants] = useState<ConversationUser[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [conversationName, setConversationName] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
-
+    const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+    const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+    const [allUsers, setAllUsers] = useState<ConversationUser[]>([]);
     const numericConversationId = Number(conversationId);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    /**
-     * Sends a new message.
-     * Optimistically updates UI with a temporary message until server confirms.
-     */
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const handleAddUsers = async () => {
+        if (!selectedUsers.length) return;
+        try {
+            await addUsersToConversation(numericConversationId, token!, selectedUsers);
+            const users = await fetchConversationUsers(numericConversationId, token!);
+            setParticipants(users);
+            setIsAddUserModalOpen(false);
+            setSelectedUsers([]);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleRemoveUser = async (userIdToRemove: number) => {
+        try {
+            await removeUserFromConversation(numericConversationId, token!, userIdToRemove);
+            setParticipants(prev => prev.filter(p => p.id !== userIdToRemove));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleLeaveConversation = async () => {
+        if (numericConversationId === 1) return;
+        try {
+            await leaveConversation(numericConversationId, token!);
+            navigate("/home");
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !token || !numericConversationId) return;
 
@@ -56,29 +116,26 @@ export const Conversation: React.FC = () => {
             setMessages(prev => prev.map(msg => msg.id === tempMessage.id ? message : msg));
         } catch (err) {
             console.error(err);
-            // Remove temporary message on failure
             setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
         } finally {
             setSending(false);
         }
     };
 
-    /**
-     * Loads messages and conversation name on mount or when conversation changes.
-     * Sets up interval to refresh messages every 60 seconds.
-     */
     useEffect(() => {
         if (!token || !numericConversationId) return;
 
-        const loadData = async () => {
+        const loadConversation = async () => {
             try {
                 setLoading(true);
-                const [msgs, name] = await Promise.all([
+                const [msgs, name, users] = await Promise.all([
                     fetchMessages(numericConversationId, token),
                     fetchConversationName(numericConversationId, token, user!.id),
+                    fetchConversationUsers(numericConversationId, token),
                 ]);
                 setMessages(msgs);
                 setConversationName(name);
+                setParticipants(users);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -86,30 +143,112 @@ export const Conversation: React.FC = () => {
             }
         };
 
-        loadData();
-
-        const interval = setInterval(() => fetchMessages(numericConversationId, token).then(setMessages), 60000);
-        return () => clearInterval(interval);
+        loadConversation();
     }, [token, conversationId]);
+
+    // Fetch all users for the add users modal
+    useEffect(() => {
+        if (!token) return;
+
+        const fetchAllUsers = async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/users`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    // Filter out users already in the conversation
+                    const participantIds = new Set(participants.map(p => p.id));
+                    const availableUsers = data.users.filter((u: ConversationUser) => !participantIds.has(u.id));
+                    setAllUsers(availableUsers);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        if (isAdminModalOpen) {
+            fetchAllUsers();
+        }
+    }, [token, isAdminModalOpen, participants]);
+
+    const currentUserParticipant = participants.find(p => p.id === user!.id);
+    const isAdmin = currentUserParticipant?.role === "ADMIN" || currentUserParticipant?.role === "OWNER";
+    const isOwner = currentUserParticipant?.role === "OWNER";
 
     return (
         <PageWrapper centered>
             <BackgroundOrbs variant="chat" />
 
+            {/* Modals */}
+            {isAdmin && (
+                <AdminModal
+                    isOpen={isAdminModalOpen}
+                    onClose={() => setIsAdminModalOpen(false)}
+                    participants={participants}
+                    currentUserId={user!.id}
+                    isOwner={isOwner}
+                    conversationId={numericConversationId}
+                    onRemoveUser={handleRemoveUser}
+                    onInviteClick={() => setIsAddUserModalOpen(true)}
+                    onLeave={handleLeaveConversation}
+                />
+            )}
+
+            <AddUsersModal
+                isOpen={isAddUserModalOpen}
+                onClose={() => {
+                    setIsAddUserModalOpen(false);
+                    setSelectedUsers([]);
+                }}
+                selectedUsers={selectedUsers}
+                onSelectedUsersChange={setSelectedUsers}
+                onAdd={handleAddUsers}
+                availableUsers={allUsers}
+            />
+
+            <LeaveConversationModal
+                isOpen={isLeaveModalOpen}
+                onClose={() => setIsLeaveModalOpen(false)}
+                onConfirm={handleLeaveConversation}
+                conversationName={conversationName}
+            />
+
+            {/* Conversation */}
             <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6">
                 {/* Conversation header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="relative flex items-center h-12"
+                    className="relative flex items-center justify-between h-12"
                 >
-                    <h2 className="absolute left-1/2 transform -translate-x-1/2 text-2xl sm:text-3xl font-bold text-white">
+                    <h2 className="flex-1 text-2xl sm:text-3xl font-bold text-white text-center">
                         {conversationName}
                     </h2>
+                    <div className="flex gap-2">
+                        {isAdmin && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setIsAdminModalOpen(true)}
+                            >
+                                Admin
+                            </Button>
+                        )}
+                        {numericConversationId !== 1 && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setIsLeaveModalOpen(true)}
+                            >
+                                Leave
+                            </Button>
+                        )}
+                    </div>
                 </motion.div>
 
-                {/* Messages list */}
+                {/* Messages */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -120,9 +259,14 @@ export const Conversation: React.FC = () => {
                             {loading ? (
                                 <div className="flex justify-center py-6">
                                     <div className="flex space-x-2">
-                                        <motion.span className="w-3 h-3 bg-white rounded-full" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
-                                        <motion.span className="w-3 h-3 bg-white rounded-full" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} />
-                                        <motion.span className="w-3 h-3 bg-white rounded-full" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} />
+                                        {[0, 1, 2].map(i => (
+                                            <motion.span
+                                                key={i}
+                                                className="w-3 h-3 bg-white rounded-full"
+                                                animate={{ y: [0, -8, 0] }}
+                                                transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.2 }}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             ) : (
@@ -149,6 +293,7 @@ export const Conversation: React.FC = () => {
                                     </motion.div>
                                 ))
                             )}
+                            <div ref={messagesEndRef} />
                         </CardContent>
 
                         {/* Message input */}

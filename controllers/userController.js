@@ -17,6 +17,18 @@ export const getUser = async (req, res) => {
     }
 }
 
+export const getUsers = async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            select: { id: true, username: true, profilePicture: true },
+        });
+        res.json({ users });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch users" });
+    }
+}
+
 export const updateProfilePic = async (req, res) => {
     const { id } = req.params
     const { profilePicture } = req.body;

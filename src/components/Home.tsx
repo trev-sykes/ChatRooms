@@ -13,6 +13,8 @@ import { fetchConversations as apiFetchConversations } from "../api/conversation
 import { avatarOptions } from "../utils/avatarOptions";
 import { Loader } from "./ui/Loader";
 import { getAvatarUrl } from "../utils/avatars";
+import { NewConversationModal } from "./modals/NewConversationModal";
+import { fetchAllUsers } from "../api/users"; // optional: fetch user list dynamically
 
 interface Conversation {
     id: number;
@@ -27,6 +29,8 @@ export const Home: React.FC = () => {
     const [avatarUrl, setAvatarUrl] = useState<string>("");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
+    const [isNewConvoOpen, setIsNewConvoOpen] = useState(false);
+    const [allUsers, setAllUsers] = useState<{ id: number; username: string }[]>([]);
     const navigate = useNavigate();
 
     // Fetch conversations
@@ -50,6 +54,19 @@ export const Home: React.FC = () => {
 
         loadConversations();
     }, [token]);
+    useEffect(() => {
+        if (!token) return;
+        const loadUsers = async () => {
+            try {
+                const users = await fetchAllUsers(token);
+                setAllUsers(users.filter((u: any) => u.id !== user?.id)); // exclude self
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        loadUsers();
+    }, [token]);
+
 
     const goToChat = (conversationId: number) => navigate(`/conversation/${conversationId}`);
 
@@ -91,7 +108,11 @@ export const Home: React.FC = () => {
                                             >
                                                 Update Avatar
                                             </Button>
-                                            <Button onClick={logout} variant="secondary">
+                                            <Button onClick={() => setIsNewConvoOpen(true)} variant="primary">
+                                                New Convo
+                                            </Button>
+
+                                            <Button onClick={logout} variant="secondary" size="sm">
                                                 Logout
                                             </Button>
                                         </div>
@@ -224,7 +245,13 @@ export const Home: React.FC = () => {
                         Update
                     </Button>
                 </Modal>
-
+                <NewConversationModal
+                    token={token!}
+                    isOpen={isNewConvoOpen}
+                    onClose={() => setIsNewConvoOpen(false)}
+                    onCreated={(conversation) => setConversations(prev => [conversation, ...prev])}
+                    allUsers={allUsers}
+                />
             </div>
         </PageWrapper>
     );

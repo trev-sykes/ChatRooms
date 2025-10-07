@@ -10,8 +10,14 @@ conversationRoutes.get("/", authMiddleware, conversationController.getConversati
 // Get messages from a specific conversation
 conversationRoutes.get("/:id/messages", authMiddleware, conversationController.getMessagesFromConversation);
 
+// routes/conversationRoutes.ts
+conversationRoutes.get("/:id/users", authMiddleware, conversationController.getConversationUsers);
+
 // Create a conversation
 conversationRoutes.post("/", authMiddleware, conversationController.createConversation);
+
+//  Add member route
+conversationRoutes.post("/add-member", authMiddleware, conversationController.addMemberToConversation);
 
 export default conversationRoutes;
 

@@ -1,3 +1,5 @@
+import axios from "axios";
+
 // Base URL for all API requests, loaded from environment variables
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -75,6 +77,19 @@ export const fetchConversationName = async (
         "Conversation"
     );
 };
+/**
+ * Fetch all users in a conversation along with their roles
+ * @param conversationId - Conversation ID
+ * @param token - User authentication token
+ * @returns Array of users with id, username, profilePicture, role
+ */
+export const fetchConversationUsers = async (conversationId: number, token: string,) => {
+    const res = await axios.get(`${BASE_URL}/conversations/${conversationId}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data.users; // should return array of { id, username, profilePicture?, role }
+};
 
 /**
  * Send a new message to a conversation
@@ -99,4 +114,84 @@ export const sendMessage = async (conversationId: number, token: string, text: s
     if (!res.ok) throw new Error(data.message || "Failed to send message");
 
     return data.message;
+};
+
+export const createConversation = async (
+    token: string,
+    userIds: number[],
+    name?: string
+) => {
+    const res = await axios.post(
+        `${BASE_URL}/conversations`,
+        { userIds, name },
+        {
+            headers: { Authorization: `Bearer ${token}` },
+        }
+    );
+
+    return res.data.conversation;
+};
+
+// Invite a member to an existing conversation (requires admin/owner)
+export const addMemberToConversation = async (
+    token: string,
+    conversationId: number,
+    userIdToAdd: number
+) => {
+    const res = await axios.post(
+        `${BASE_URL}/conversations/add-member`,
+        { conversationId, userIdToAdd },
+        {
+            headers: { Authorization: `Bearer ${token}` },
+        }
+    );
+
+    return res.data.member;
+};
+
+/**
+ * Invite multiple users to a conversation (admin/owner only)
+ */
+export const addUsersToConversation = async (
+    conversationId: number,
+    token: string,
+    userIds: number[]
+) => {
+    const res = await axios.post(
+        `${BASE_URL}/conversations/add-members`,
+        { conversationId, userIds },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return res.data.members; // returns array of added users
+};
+
+/**
+ * Remove a user from a conversation (admin/owner only)
+ */
+export const removeUserFromConversation = async (
+    conversationId: number,
+    token: string,
+    userIdToRemove: number
+) => {
+    const res = await axios.post(
+        `${BASE_URL}/conversations/remove-member`,
+        { conversationId, userIdToRemove },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return res.data.member; // returns removed user
+};
+
+/**
+ * Leave a conversation
+ */
+export const leaveConversation = async (conversationId: number, token: string) => {
+    const res = await axios.post(
+        `${BASE_URL}/conversations/leave`,
+        { conversationId },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return res.data.message; // e.g., "Left conversation"
 };
