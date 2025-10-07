@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardContent, CardFooter } from "../ui/Card";
+import { Card, CardHeader, CardContent, CardFooter } from "./Card";
 
 type ModalProps = {
     isOpen: boolean;

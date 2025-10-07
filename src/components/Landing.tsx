@@ -1,10 +1,10 @@
 import { useUser } from "../context/UserContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Button } from "./button/Button";
+import { Button } from "./ui/Button";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardContent, CardFooter } from "./ui/Card";
-import { BackgroundOrbs } from "./BackgroundOrbs";
+import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 
 export const Landing: React.FC = () => {
     const { user } = useUser();

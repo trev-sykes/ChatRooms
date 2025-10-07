@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { motion } from "framer-motion";
 import { PageWrapper } from "./layout/PageWrapper";
-import { Button } from "./button/Button";
+import { Button } from "./ui/Button";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
-import { TextInput } from "./input/TextInput";
-import { BackgroundOrbs } from "./BackgroundOrbs";
+import { TextInput } from "./ui/TextInput";
+import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { fetchMessages, fetchConversationName, sendMessage } from "../api/conversations";
 
 interface Message {

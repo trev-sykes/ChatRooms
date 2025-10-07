@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useUser } from "../context/UserContext";
 import { PageWrapper } from "./layout/PageWrapper";
-import { TextInput } from "./input/TextInput";
+import { TextInput } from "./ui/TextInput";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card";
-import { Button } from "./button/Button";
-import { BackgroundOrbs } from "./BackgroundOrbs";
+import { Button } from "./ui/Button";
+import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import { createUser } from "../api/auth";
 import axios from "axios";
@@ -146,6 +146,7 @@ export const CreateUser: React.FC = () => {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Username"
+                                disabled={loading}
                             />
 
                             <TextInput
@@ -153,12 +154,14 @@ export const CreateUser: React.FC = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
                                 type="password"
+                                disabled={loading}
                             />
 
                             <TextInput
                                 value={profilePicture}
                                 onChange={(e) => setProfilePicture(e.target.value)}
                                 placeholder="Profile Picture URL (optional)"
+                                disabled={loading}
                             />
 
                             <Button

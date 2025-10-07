@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useUser } from "../context/UserContext";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { TextInput } from "../components/input/TextInput";
+import { TextInput } from "./ui/TextInput";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card";
-import { Button } from "./button/Button";
-import { BackgroundOrbs } from "./BackgroundOrbs";
+import { useLoadingToast } from "../hooks/useLoadingToast";
+import { LoadingToast } from "./toasts/LoadingToast";
+import { Button } from "./ui/Button";
+import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
@@ -15,6 +17,7 @@ import axios from "axios";
  */
 export const Login: React.FC = () => {
     const apiUrl = import.meta.env.VITE_API_BASE_URL;
+    const { isOpen: showLoadingToast, start: startLoadingToast, stop: stopLoadingToast, message: loadingMessage } = useLoadingToast(6000);
 
     // Form state
     const [username, setUsername] = useState<string>("");
@@ -75,6 +78,7 @@ export const Login: React.FC = () => {
             setError(errorMessage);
         } finally {
             setLoginLoading(false);
+            stopLoadingToast();
         }
     };
 
@@ -85,6 +89,7 @@ export const Login: React.FC = () => {
         localStorage.removeItem("token");
         setError(null);
         setLoginLoading(true);
+        startLoadingToast();
 
         try {
             await login(username, password);
@@ -93,6 +98,7 @@ export const Login: React.FC = () => {
             setError(err.message || "Login failed. Please try again.");
         } finally {
             setLoginLoading(false);
+            stopLoadingToast();
         }
     };
 
@@ -141,12 +147,14 @@ export const Login: React.FC = () => {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Username"
+                                disabled={loginLoading}
                             />
                             <TextInput
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
                                 type="password"
+                                disabled={loginLoading}
                             />
 
                             <Button
@@ -174,6 +182,12 @@ export const Login: React.FC = () => {
                     </CardFooter>
                 </Card>
             </motion.div>
+            <LoadingToast
+                isOpen={showLoadingToast}
+                onClose={stopLoadingToast}
+                title={loadingMessage.title}
+                message={loadingMessage.body}
+            />
         </PageWrapper>
     );
 };

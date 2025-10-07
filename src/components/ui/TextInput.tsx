@@ -8,6 +8,7 @@ type TextInputProps = {
     type?: string;
     error?: string;
     className?: string;
+    disabled?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; // 👈 add this
 };
 
@@ -19,6 +20,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     error,
     className,
     onKeyDown, // 👈 include here
+    disabled
 }) => {
     return (
         <div className="flex flex-col w-full mb-6 relative">
@@ -28,6 +30,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 onChange={onChange}
                 onKeyDown={onKeyDown} // 👈 pass it down
                 placeholder={placeholder}
+                disabled={disabled}
                 className={`
                     w-full px-4 py-3 rounded-xl text-base
                     bg-white/10 text-white placeholder-gray-400

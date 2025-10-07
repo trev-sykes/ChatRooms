@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../components/ui/Card";
 import { PageWrapper } from "./layout/PageWrapper";
-import { Button } from "./button/Button";
+import { Button } from "./ui/Button";
 
 interface User {
     id: number;

@@ -8,10 +8,11 @@ import { Login } from './components/Login';
 import { CreateUser } from './components/CreateUser';
 import { ProfileModal } from './components/ProfileModal';
 import { ConversationPage } from './components/ConversationPage';
-import { NavBar } from './components/nav/NavBar';
+import { NavBar } from './components/ui/NavBar';
 import { useWakeServer } from './hooks/useWakeServer';
-import { ServerStatusModal } from './components/ServerStatusModal';
+import { ServerStatusToast } from './components/toasts/ServerStatusToast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { IsOnlineToast } from './components/toasts/IsOnlineToast';
 
 function App() {
   const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
@@ -61,7 +62,8 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
-            <ServerStatusModal status={isHealthy} />
+            <IsOnlineToast />
+            <ServerStatusToast status={isHealthy} />
           </div>
         </Router>
       </UserProvider >
