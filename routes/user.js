@@ -12,6 +12,10 @@ userRoutes.get("/", authMiddleware, userController.getUsers);
 userRoutes.get("/:id", authMiddleware, userController.getUser);
 
 //Updates a users profile picture
-userRoutes.patch("/:id/profile-picture", authMiddleware, userController.updateProfilePic);
+userRoutes.patch("/profile-picture", authMiddleware, userController.updateProfilePic);
+// Updates a user profile
+userRoutes.put("/profile", authMiddleware, userController.updateProfile);
 
+// Updates the last seen for a user
+userRoutes.patch("/last-seen", authMiddleware, userController.updateLastSeen);
 export default userRoutes

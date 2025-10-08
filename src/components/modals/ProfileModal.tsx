@@ -5,11 +5,14 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "../ui/Card";
 import { PageWrapper } from "../layout/PageWrapper";
 import { Button } from "../ui/Button";
+import { formatLastSeen } from "../../utils/formatLastSeen";
 
 interface User {
     id: number;
     username: string;
     profilePicture?: string;
+    bio?: string;
+    lastSeen?: string;
 }
 
 interface Conversation {
@@ -20,7 +23,7 @@ interface Conversation {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const ProfileModal: React.FC = () => {
-    const { token } = useUser();
+    const { user, token } = useUser();
     const [selectedUser, setUser] = useState<User | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [text, setText] = useState("");
@@ -28,6 +31,8 @@ export const ProfileModal: React.FC = () => {
     const { userId } = useParams<{ userId: string }>();
     const numericUserId = Number(userId);
     const navigate = useNavigate();
+    const isOwnProfile = user?.id === selectedUser?.id;
+
 
     useEffect(() => {
         if (!token) return;
@@ -104,6 +109,11 @@ export const ProfileModal: React.FC = () => {
         </PageWrapper>
     );
 
+    const isOnline = selectedUser?.lastSeen
+        ? new Date(selectedUser.lastSeen).getTime() > Date.now() - 60 * 1000
+        : true; // if no lastSeen, consider online
+
+
     return (
         <PageWrapper centered>
             <motion.div
@@ -125,7 +135,7 @@ export const ProfileModal: React.FC = () => {
                     <motion.img
                         src={selectedUser.profilePicture || "https://placehold.co/120x120"}
                         alt={selectedUser.username}
-                        className="w-32 h-32 rounded-full object-cover shadow-md"
+                        className={`w-32 h-32 rounded-full object-cover shadow-md border-4 ${isOnline ? 'border-green-400' : 'border-gray-600'}`}
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.2 }}
                     />
@@ -133,8 +143,27 @@ export const ProfileModal: React.FC = () => {
                     {/* Username */}
                     <h2 className="text-2xl font-bold text-white text-center">{selectedUser.username}</h2>
 
+                    {/* Bio */}
+                    {selectedUser.bio ? (
+                        <p className="text-gray-300 text-center mt-2 text-sm">{selectedUser.bio}</p>
+                    ) : isOwnProfile ? (
+                        <p
+                            className="text-indigo-400 text-center mt-2 text-sm cursor-pointer hover:text-indigo-300"
+                            onClick={() => alert("Open edit profile modal here")}
+                        >
+                            No bio yet — add one!
+                        </p>
+                    ) : null}
+
+
+                    {/* Last Seen / Online */}
+                    <p className={`text-center text-xs mt-1 ${isOnline ? 'text-green-400' : 'text-gray-400'}`}>
+                        {isOnline ? "Online" : `Last seen: ${formatLastSeen(selectedUser.lastSeen)}`}
+                    </p>
+
+
                     {/* Conditional: show input or Go to Chat button */}
-                    <CardContent className="w-full flex flex-col gap-3">
+                    <CardContent className="w-full flex flex-col gap-3 mt-3">
                         {existingConversation ? (
                             <motion.button
                                 onClick={() => navigate(`/conversation/${existingConversation.id}`)}

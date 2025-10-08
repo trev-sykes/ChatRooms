@@ -6,7 +6,7 @@ type ButtonProps = {
     onClick?: () => void;
     type?: "button" | "submit" | "reset";
     variant?: "primary" | "secondary" | "cta" | "login";
-    size?: "sm" | "md" | "lg";      // 👈 add size prop
+    size?: "xs" | "sm" | "md" | "lg";      // 👈 add size prop
     className?: string;
     disabled?: boolean;
     loading?: boolean;
@@ -28,6 +28,7 @@ export const Button: React.FC<ButtonProps> = ({
         "rounded-xl font-semibold text-sm transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed";
 
     const sizeStyles = {
+        xs: "px-2 py-1 text-xs",
         sm: "px-3 py-1 text-sm",
         md: "px-6 py-3 text-sm",
         lg: "px-8 py-4 text-lg",

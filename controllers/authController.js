@@ -56,6 +56,9 @@ export const googleAuth = async (req, res) => {
                 username: user.username,
                 email: user.email,
                 profilePicture: user.profilePicture,
+                bio: user.bio,
+                isDiscoverable: user.isDiscoverable,
+                lastSeen: user.lastSeen
             },
         });
     } catch (error) {
@@ -108,9 +111,17 @@ export const login = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            token,
-            user: { id: user.id, username: user.username, profilePicture: user.profilePicture },
+            token, // <--- add this
+            user: {
+                id: user.id,
+                username: user.username,
+                profilePicture: user.profilePicture,
+                bio: user.bio ?? "",
+                isDiscoverable: user.isDiscoverable ?? true,
+                lastSeen: user.lastSeen
+            },
         });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Login error" });
@@ -124,8 +135,16 @@ export const me = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            user: { id: user.id, username: user.username, profilePicture: user.profilePicture },
+            user: {
+                id: user.id,
+                username: user.username,
+                profilePicture: user.profilePicture,
+                bio: user.bio ?? "",
+                isDiscoverable: user.isDiscoverable ?? true,
+                lastSeen: user.lastSeen
+            },
         });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Error fetching user" });

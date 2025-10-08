@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id             Int     @id @default(autoincrement())
-  username       String  @unique
-  email          String? @unique
+  id             Int       @id @default(autoincrement())
+  username       String    @unique
+  email          String?   @unique
   password       String?
-  googleId       String? @unique
+  googleId       String?   @unique
   profilePicture String?
-
-  // 🌐 Global role (app-wide permissions)
-  role UserRole @default(USER)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  role           UserRole  @default(USER)
+  isDiscoverable Boolean   @default(true) // 🔍 Can appear in search?
+  bio            String? // 🧠 Optional
+  lastSeen       DateTime? // ⏱️ For activity
+  isOnline       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
 
   messages             Message[]
   conversations        UserConversation[]

@@ -15,7 +15,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { IsOnlineToast } from './components/toasts/IsOnlineToast';
 
 function App() {
-  const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const isHealthy: null | boolean = useWakeServer();
   return (
     <GoogleOAuthProvider clientId={VITE_GOOGLE_CLIENT_ID}>

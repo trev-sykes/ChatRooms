@@ -227,26 +227,51 @@ export const Conversation: React.FC = () => {
                         {conversationName}
                     </h2>
                     <div className="flex gap-2">
-                        {isAdmin && (
+                    </div>
+                </motion.div>
+                {/* Participants + Admin/Leave buttons */}
+                {participants.length > 0 && numericConversationId !== 1 && (
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
+
+                        {/* Participant images */}
+                        <div className="flex gap-2 flex-wrap">
+                            {participants.map((p, index) => (
+                                <motion.img
+                                    key={p.id}
+                                    src={p.profilePicture || "https://placehold.co/40x40"}
+                                    alt={p.username}
+                                    title={p.username}
+                                    className="w-10 h-10 rounded-full border-2 border-slate-800 object-cover cursor-pointer"
+                                    whileHover={{ scale: 1.1 }}
+                                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                                    onClick={() => navigate(`/user/${p.id}`)}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Grouped Admin + Leave buttons */}
+                        <div className="flex gap-2">
+                            {isAdmin && (
+                                <Button
+                                    variant="secondary"
+                                    size="xs"
+                                    onClick={() => setIsAdminModalOpen(true)}
+                                >
+                                    Admin
+                                </Button>
+                            )}
                             <Button
                                 variant="secondary"
-                                size="sm"
-                                onClick={() => setIsAdminModalOpen(true)}
-                            >
-                                Admin
-                            </Button>
-                        )}
-                        {numericConversationId !== 1 && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
+                                size="xs"
                                 onClick={() => setIsLeaveModalOpen(true)}
                             >
                                 Leave
                             </Button>
-                        )}
+                        </div>
                     </div>
-                </motion.div>
+                )}
 
                 {/* Messages */}
                 <motion.div

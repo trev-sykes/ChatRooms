@@ -26,6 +26,19 @@ export const updateUserAvatar = async (
 
     return data;
 };
+export async function updateProfile(token: string, userId: number, updates: { bio?: string; isDiscoverable?: boolean }) {
+    const res = await fetch(`${BASE_URL}/users/${userId}/profile`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error("Failed to update profile");
+    const data = await res.json();
+    return data.user;
+}
 
 /**
  * Fetch all users in the system

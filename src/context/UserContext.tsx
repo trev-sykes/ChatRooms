@@ -10,6 +10,9 @@ type User = {
     id: number;
     username: string;
     profilePicture: string;
+    bio?: string;
+    isDiscoverable: boolean;
+    lastSeen: any;
 } | null;
 
 /**
