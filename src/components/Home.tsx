@@ -157,13 +157,6 @@ export const Home = () => {
                                     >
                                         Edit Profile
                                     </button>
-
-                                    <button
-                                        onClick={() => setIsNewConvoOpen(true)}
-                                        className="w-full px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                                    >
-                                        <Plus size={18} /> New Conversation
-                                    </button>
                                     <button
                                         onClick={logout}
                                         className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
@@ -185,8 +178,20 @@ export const Home = () => {
                             {/* Header */}
                             <div className="border-b border-slate-700 px-6 py-4 flex items-center justify-between">
                                 <h2 className="text-xl font-semibold text-white">Conversations</h2>
-                            </div>
+                                <Button
+                                    variant="primary"
+                                    size="xs"
+                                    onClick={() => setIsNewConvoOpen(true)}
+                                    className="flex items-center justify-center gap-2 
+               md:px-6 md:py-3 md:text-sm 
+               px-3 py-1 text-xs"
+                                >
+                                    <Plus size={18} />
+                                    <span className="hidden sm:inline">New Conversation</span>
+                                    <span className="inline sm:hidden">New Convo</span>
+                                </Button>
 
+                            </div>
                             {/* Search */}
                             <div className="px-6 py-3 border-b border-slate-700 bg-slate-800/50">
                                 <div className="relative">
