@@ -79,7 +79,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser({ ...user, profilePicture: avatarToUse });
 
         try {
-            await updateUserAvatar(user.id, token, avatarToUse);
+            await updateUserAvatar(token, avatarToUse);
         } catch (err) {
             console.error("Error updating avatar:", err);
             fetchCurrentUser(token).then(freshUser => setUser(freshUser)).catch(() => setUser(null));
