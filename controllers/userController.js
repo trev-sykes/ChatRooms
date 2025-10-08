@@ -61,7 +61,7 @@ export const getUsers = async (req, res) => {
 };
 
 export const updateProfilePic = async (req, res) => {
-    const { id } = req.params;
+    const userId = req.user.userId; // get from auth middleware
     const { profilePicture } = req.body;
 
     if (!profilePicture || typeof profilePicture !== "string") {
@@ -72,9 +72,9 @@ export const updateProfilePic = async (req, res) => {
 
     try {
         const updatedUser = await prisma.user.update({
-            where: { id: Number(id) },
+            where: { id: userId },
             data: { profilePicture },
-            select: { id: true, username: true, profilePicture: true }, // prevent leaking sensitive info
+            select: { id: true, username: true, profilePicture: true },
         });
 
         res.status(200).json({ success: true, user: updatedUser });
@@ -83,13 +83,14 @@ export const updateProfilePic = async (req, res) => {
         res.status(500).json({ error: "Error updating profile picture" });
     }
 };
+
 export const updateProfile = async (req, res) => {
-    const { id } = req.params;
+    const userId = req.user.userId; // get from auth middleware
     const { bio, isDiscoverable } = req.body;
 
     try {
         const updatedUser = await prisma.user.update({
-            where: { id: Number(id) },
+            where: { id: userId },
             data: {
                 ...(bio !== undefined && { bio }),
                 ...(isDiscoverable !== undefined && { isDiscoverable }),
@@ -109,6 +110,7 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ error: "Failed to update profile" });
     }
 };
+
 export const updateLastSeen = async (req, res) => {
     const userId = req.user.userId; // get from auth middleware
     try {

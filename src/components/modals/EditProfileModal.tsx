@@ -27,7 +27,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
         if (!user || !token) return;
         setLoading(true);
         try {
-            const updatedUser = await updateProfile(token, user.id, { bio, isDiscoverable });
+            const updatedUser = await updateProfile(token, { bio, isDiscoverable });
             console.log("Updated user:", updatedUser);
             setUser(updatedUser);
             onClose();

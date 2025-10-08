@@ -8,11 +8,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * @throws Error if the request fails
  */
 export const updateUserAvatar = async (
-    userId: number,
     token: string,
     profilePictureUrl: string
 ) => {
-    const res = await fetch(`${BASE_URL}/users/${userId}/profile-picture`, {
+    const res = await fetch(`${BASE_URL}/users/profile-picture`, {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
@@ -26,8 +25,8 @@ export const updateUserAvatar = async (
 
     return data;
 };
-export async function updateProfile(token: string, userId: number, updates: { bio?: string; isDiscoverable?: boolean }) {
-    const res = await fetch(`${BASE_URL}/users/${userId}/profile`, {
+export async function updateProfile(token: string, updates: { bio?: string; isDiscoverable?: boolean }) {
+    const res = await fetch(`${BASE_URL}/users/profile`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
