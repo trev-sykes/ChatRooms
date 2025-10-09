@@ -15,6 +15,9 @@ import { avatarOptions } from "../utils/avatarOptions";
 import { EditProfileModal } from "./modals/EditProfileModal";
 import { useHeartbeat } from "../hooks/useHeartbeat";
 
+import { useDebounce } from "../hooks/useDebounce";
+
+
 
 interface Conversation {
     id: number;
@@ -33,6 +36,8 @@ export const Home = () => {
     const [allUsers, setAllUsers] = useState<{ id: number; username: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const debouncedSearchTerm = useDebounce(searchTerm, 400); // 👈 optional delay
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isNewConvoOpen, setIsNewConvoOpen] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState("");
@@ -66,13 +71,13 @@ export const Home = () => {
                 console.error(err);
             }
         };
-        console.log("User in profile page:", user);
+
         loadConversations();
         loadUsers();
     }, [token]);
 
     useEffect(() => {
-        const search = searchTerm.toLowerCase();
+        const search = debouncedSearchTerm.toLowerCase();
         setFilteredConvos(
             conversations.filter((c) => {
                 const name = c.name?.toLowerCase() || "";
@@ -80,7 +85,8 @@ export const Home = () => {
                 return name.includes(search) || usernames.includes(search);
             })
         );
-    }, [searchTerm, conversations]);
+    }, [debouncedSearchTerm, conversations]);
+
 
     const goToChat = (id: number) => navigate(`/conversation/${id}`);
     if (!user)
