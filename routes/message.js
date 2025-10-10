@@ -13,4 +13,11 @@ messageRoutes.get("/messages/:conversationId", authMiddleware, messageController
 // Send a message
 messageRoutes.post("/messages", authMiddleware, messageController.sendMessage);
 
+// Mark messages as read in a conversation
+messageRoutes.post("/messages/:conversationId/read", authMiddleware, messageController.markMessagesAsRead);
+// ✅ New route
+messageRoutes.get("/messages/:conversationId/receipts", authMiddleware, messageController.getConversationReceipts);
+
+
+
 export default messageRoutes;

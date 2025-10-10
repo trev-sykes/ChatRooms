@@ -20,6 +20,7 @@ import { useDebounce } from "../hooks/useDebounce";
 
 
 interface Conversation {
+    unreadCount: number;
     id: number;
     name?: string | null;
     users: { id: number; username: string; profilePicture?: string }[];
@@ -241,6 +242,12 @@ export const Home = () => {
                                                                     convo.users
                                                                         .map((u) => u.username)
                                                                         .join(", ")}
+                                                                {/* 🔹 Add unread badge here */}
+                                                                {convo.unreadCount > 0 && (
+                                                                    <span className="ml-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                                                                        {convo.unreadCount}
+                                                                    </span>
+                                                                )}
                                                             </h3>
                                                             <p className="text-sm text-gray-400 mt-1">
                                                                 {convo._count?.messages || 0} messages

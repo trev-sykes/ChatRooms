@@ -1,45 +1,62 @@
 import { prisma } from "../prisma/prisma.js"
 
 // Get all conversation for user
+// Get all conversations for user (with unread count)
 export const getConversations = async (req, res) => {
     const userId = req.user.userId;
+
     try {
         const conversations = await prisma.conversation.findMany({
             where: {
                 OR: [
-                    { users: { some: { userId } } }, // Grab conversations the user is in
-                    { id: 1 }, // Include the global chat
-                ]
+                    { users: { some: { userId } } }, // conversations the user is in
+                    { id: 1 }, // include the global chat
+                ],
             },
             include: {
                 users: {
                     select: {
                         user: {
                             select: { id: true, username: true, profilePicture: true },
-                        }
-                    }
+                        },
+                        role: true,
+                    },
                 },
-                _count: { select: { messages: true } }
+                messages: {
+                    select: {
+                        id: true,
+                        receipts: {
+                            where: { userId, isRead: false },
+                            select: { id: true },
+                        },
+                    },
+                },
+                _count: { select: { messages: true } },
             },
-            orderBy: { createdAt: "desc" }
+            orderBy: { createdAt: "desc" },
         });
-        // flatten users array: users.user -> users
-        const formatted = conversations.map(conversation => ({
+
+        // Flatten users array and compute unread count
+        const formatted = conversations.map((conversation) => ({
             ...conversation,
-            users: conversation.users.map(uc => ({
+            users: conversation.users.map((uc) => ({
                 id: uc.user.id,
                 username: uc.user.username,
                 profilePicture: uc.user.profilePicture,
-                role: uc.role, // <-- include this!
-            }))
+                role: uc.role,
+            })),
+            unreadCount: conversation.messages.reduce(
+                (sum, msg) => sum + (msg.receipts.length > 0 ? 1 : 0),
+                0
+            ),
         }));
 
         res.json({ conversations: formatted });
     } catch (error) {
-        console.error(error.message);
+        console.error("❌ Error getting conversations:", error);
         res.status(500).json({ error: "Error getting conversations" });
     }
-}
+};
 // controllers/conversationController.ts
 export const getConversationUsers = async (req, res) => {
     const conversationId = Number(req.params.id);

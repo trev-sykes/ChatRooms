@@ -25,6 +25,7 @@ model User {
   messages             Message[]
   conversations        UserConversation[]
   createdConversations Conversation[]     @relation("CreatedConversations")
+  messageReceipts      MessageReceipt[]
 }
 
 // 🌍 Enum for system-level roles
@@ -40,7 +41,6 @@ model Conversation {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  // optional: track who created the conversation
   createdById Int?
   createdBy   User? @relation("CreatedConversations", fields: [createdById], references: [id])
 
@@ -55,7 +55,6 @@ model UserConversation {
   userId         Int
   conversationId Int
 
-  // 🛡️ Conversation-level role
   role     ConversationRole @default(MEMBER)
   joinedAt DateTime         @default(now())
 
@@ -83,8 +82,9 @@ model Message {
   senderId       Int
   conversationId Int
 
-  sender       User         @relation(fields: [senderId], references: [id])
-  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User             @relation(fields: [senderId], references: [id])
+  conversation Conversation     @relation(fields: [conversationId], references: [id])
+  receipts     MessageReceipt[]
 
   @@index([conversationId])
   @@index([createdAt])
@@ -95,4 +95,20 @@ enum MessageType {
   TEXT
   IMAGE
   FILE
+}
+
+// ✅ New model for read/unread tracking
+model MessageReceipt {
+  id        Int       @id @default(autoincrement())
+  messageId Int
+  userId    Int
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+
+  message Message @relation(fields: [messageId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
 }

@@ -171,6 +171,43 @@ export const Conversation: React.FC = () => {
             fetchAllUsers();
         }
     }, [token, isAdminModalOpen, participants]);
+    useEffect(() => {
+        if (!token || !numericConversationId) return;
+
+        const markAsRead = async () => {
+            try {
+                await fetch(`${BASE_URL}/messages/${numericConversationId}/read`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            } catch (err) {
+                console.error("Error marking messages as read:", err);
+            }
+        };
+
+        markAsRead();
+
+        // Then load messages
+        const loadConversation = async () => {
+            try {
+                setLoading(true);
+                const [msgs, name, users] = await Promise.all([
+                    fetchMessages(numericConversationId, token),
+                    fetchConversationName(numericConversationId, token, user!.id),
+                    fetchConversationUsers(numericConversationId, token),
+                ]);
+                setMessages(msgs);
+                setConversationName(name);
+                setParticipants(users);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadConversation();
+    }, [token, conversationId]);
 
     const currentUserParticipant = participants.find(p => p.id === user!.id);
     const isAdmin = currentUserParticipant?.role === "ADMIN" || currentUserParticipant?.role === "OWNER";

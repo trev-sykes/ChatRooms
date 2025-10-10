@@ -11,15 +11,19 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * @throws Error if the request fails
  */
 export const fetchMessages = async (conversationId: number, token: string) => {
-    const res = await fetch(`${BASE_URL}/conversations/${conversationId}/messages`, {
-        headers: { Authorization: `Bearer ${token}` }, // Pass auth token in header
+    const res = await fetch(`${BASE_URL}/messages/${conversationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
     });
 
     const data = await res.json();
-
     if (!res.ok) throw new Error(data.message || "Failed to fetch messages");
 
-    return data.messages;
+    // Optionally map receipts directly into message objects
+    return data.messages.map((msg: any) => ({
+        ...msg,
+        isRead: msg.receipts?.[0]?.isRead || false,
+        readAt: msg.receipts?.[0]?.readAt || null,
+    }));
 };
 
 /**
@@ -194,4 +198,42 @@ export const leaveConversation = async (conversationId: number, token: string) =
     );
 
     return res.data.message; // e.g., "Left conversation"
+};
+
+/**
+ * Mark all messages in a conversation as read
+ * @param conversationId - ID of the conversation
+ * @param token - User auth token
+ * @returns The count of updated messages
+ */
+export const markMessagesAsRead = async (conversationId: number, token: string) => {
+    const res = await fetch(`${BASE_URL}/messages/${conversationId}/read`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message || "Failed to mark messages as read");
+
+    return data; // { updatedCount, unreadCount? }
+};
+
+export const fetchMessageReceipts = async (conversationId: number, token: string) => {
+    const res = await fetch(`${BASE_URL}/conversations/${conversationId}/receipts`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch receipts");
+    return data.receipts;
+};
+
+export const markMessageAsRead = async (messageId: number, token: string) => {
+    const res = await fetch(`${BASE_URL}/messages/${messageId}/read`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to mark as read");
+    return data.receipt;
 };
