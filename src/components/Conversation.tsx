@@ -30,7 +30,8 @@ interface ConversationUser {
 interface Message {
     id: number;
     text: string;
-    sender: {
+    type: "TEXT" | "IMAGE" | "FILE" | "SYSTEM"; // 🆕 add SYSTEM
+    sender?: {
         id: number;
         username: string;
         profilePicture?: string;
@@ -104,9 +105,11 @@ export const Conversation: React.FC = () => {
         const tempMessage: Message = {
             id: Date.now(),
             text: newMessage,
+            type: "TEXT", // ✅ Add this
             sender: { id: user!.id, username: user!.username },
             createdAt: new Date().toISOString(),
         };
+
         setMessages(prev => [...prev, tempMessage]);
         setNewMessage("");
         setSending(true);
@@ -212,6 +215,31 @@ export const Conversation: React.FC = () => {
     const currentUserParticipant = participants.find(p => p.id === user!.id);
     const isAdmin = currentUserParticipant?.role === "ADMIN" || currentUserParticipant?.role === "OWNER";
     const isOwner = currentUserParticipant?.role === "OWNER";
+    useEffect(() => {
+        if (!token || !numericConversationId) return;
+
+        const loadConversation = async () => {
+            try {
+                setLoading(true);
+                const [msgs, name, users] = await Promise.all([
+                    fetchMessages(numericConversationId, token),
+                    fetchConversationName(numericConversationId, token, user!.id),
+                    fetchConversationUsers(numericConversationId, token),
+                ]);
+
+                console.log("Fetched messages:", msgs); // 🔍 Add this
+                setMessages(msgs);
+                setConversationName(name);
+                setParticipants(users);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadConversation();
+    }, [token, conversationId]);
 
     return (
         <PageWrapper centered>
@@ -321,7 +349,7 @@ export const Conversation: React.FC = () => {
                             {loading ? (
                                 <div className="flex justify-center py-6">
                                     <div className="flex space-x-2">
-                                        {[0, 1, 2].map(i => (
+                                        {[0, 1, 2].map((i) => (
                                             <motion.span
                                                 key={i}
                                                 className="w-3 h-3 bg-white rounded-full"
@@ -332,28 +360,52 @@ export const Conversation: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                                messages.map(msg => (
-                                    <motion.div
-                                        key={msg.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className={`flex gap-3 items-start ${msg.sender.id === user?.id ? "justify-end" : "justify-start"}`}
-                                    >
-                                        {msg.sender.id !== user?.id && (
-                                            <img
-                                                src={msg.sender.profilePicture || "https://placehold.co/48x48"}
-                                                alt={msg.sender.username}
-                                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover cursor-pointer"
-                                                onClick={() => navigate(`/user/${msg.sender.id}`)}
-                                            />
-                                        )}
-                                        <div className={`px-4 py-2 rounded-2xl max-w-[70%] sm:max-w-[60%] ${msg.sender.id === user?.id ? "bg-indigo-600 text-white self-end" : "bg-white/20 text-white"}`}>
-                                            <strong>{msg.sender.username}</strong>: {msg.text}
-                                            <div className="text-xs text-gray-300 mt-1">{new Date(msg.createdAt).toLocaleString()}</div>
-                                        </div>
-                                    </motion.div>
-                                ))
+                                messages.map((msg) => {
+                                    if (msg.type === "SYSTEM") {
+                                        return (
+                                            <motion.div
+                                                key={msg.id}
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-center text-gray-400 italic text-sm my-2"
+                                            >
+                                                {msg.text}
+                                            </motion.div>
+                                        );
+                                    }
+
+                                    return (
+                                        <motion.div
+                                            key={msg.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className={`flex gap-3 items-start ${msg.sender?.id === user?.id ? "justify-end" : "justify-start"
+                                                }`}
+                                        >
+                                            {msg.sender?.id !== user?.id && (
+                                                <img
+                                                    src={msg.sender?.profilePicture || "https://placehold.co/48x48"}
+                                                    alt={msg.sender?.username}
+                                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover cursor-pointer"
+                                                    onClick={() => navigate(`/user/${msg.sender?.id}`)}
+                                                />
+                                            )}
+                                            <div
+                                                className={`px-4 py-2 rounded-2xl max-w-[70%] sm:max-w-[60%] ${msg.sender?.id === user?.id
+                                                    ? "bg-indigo-600 text-white self-end"
+                                                    : "bg-white/20 text-white"
+                                                    }`}
+                                            >
+                                                <strong>{msg.sender?.username}</strong>: {msg.text}
+                                                <div className="text-xs text-gray-300 mt-1">
+                                                    {new Date(msg.createdAt).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })
                             )}
                             <div ref={messagesEndRef} />
                         </CardContent>

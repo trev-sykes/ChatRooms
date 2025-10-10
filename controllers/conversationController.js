@@ -213,6 +213,15 @@ export const addMemberToConversation = async (req, res) => {
             where: { id: conversationId },
             data: { updatedAt: new Date() },
         });
+        // After successfully adding the user as a MEMBER
+        await prisma.message.create({
+            data: {
+                text: `${newMember.user.username} joined the conversation.`,
+                type: "SYSTEM",
+                senderId: null, // or a dedicated system user ID
+                conversationId: conversationId,
+            },
+        });
 
         res.json({
             message: "User added successfully",
@@ -221,5 +230,64 @@ export const addMemberToConversation = async (req, res) => {
     } catch (error) {
         console.error("❌ Error adding member:", error);
         res.status(500).json({ error: "Error adding member to conversation" });
+    }
+};
+export const leaveConversation = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { conversationId } = req.body;
+        const id = Number(conversationId);
+
+        if (!id) {
+            return res.status(400).json({ message: "conversationId is required" });
+        }
+
+        if (id === 1) {
+            return res.status(403).json({
+                message: "You cannot leave the global conversation",
+            });
+        }
+
+        // Find the user's membership and username
+        const existing = await prisma.userConversation.findUnique({
+            where: {
+                userId_conversationId: {
+                    userId,
+                    conversationId: id,
+                },
+            },
+            include: { user: true },
+        });
+
+        if (!existing) {
+            return res.status(404).json({ message: "You are not part of this conversation" });
+        }
+
+        // Remove the user from the conversation
+        await prisma.userConversation.delete({
+            where: {
+                userId_conversationId: {
+                    userId,
+                    conversationId: id,
+                },
+            },
+        });
+
+        // Create a SYSTEM message saying they left
+        await prisma.message.create({
+            data: {
+                text: `${existing.user.username} left the conversation.`,
+                type: "SYSTEM",
+                senderId: existing.user.id, // optional; you can create a fake "system" user later if you want
+                conversationId: id,
+            },
+        });
+
+        return res.status(200).json({
+            message: "You have left the conversation",
+        });
+    } catch (error) {
+        console.error("❌ Error leaving conversation:", error);
+        return res.status(500).json({ message: "Failed to leave conversation" });
     }
 };

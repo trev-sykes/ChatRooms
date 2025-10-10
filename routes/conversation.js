@@ -19,6 +19,10 @@ conversationRoutes.post("/", authMiddleware, conversationController.createConver
 //  Add member route
 conversationRoutes.post("/add-member", authMiddleware, conversationController.addMemberToConversation);
 
+// Leave a conversation
+conversationRoutes.post("/leave", authMiddleware, conversationController.leaveConversation);
+
+
 export default conversationRoutes;
 
 

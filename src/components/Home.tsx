@@ -82,10 +82,13 @@ export const Home = () => {
         setFilteredConvos(
             conversations.filter((c) => {
                 const name = c.name?.toLowerCase() || "";
-                const usernames = c.users.map((u) => u.username.toLowerCase()).join(" ");
+                const usernames = c.users
+                    .map((u) => u.username?.toLowerCase() || "")
+                    .join(" ");
                 return name.includes(search) || usernames.includes(search);
             })
         );
+
     }, [debouncedSearchTerm, conversations]);
 
 

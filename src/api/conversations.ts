@@ -14,17 +14,16 @@ export const fetchMessages = async (conversationId: number, token: string) => {
     const res = await fetch(`${BASE_URL}/messages/${conversationId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
-
     const data = await res.json();
+    console.log("RAW messages from API:", data.messages); // 🔍
     if (!res.ok) throw new Error(data.message || "Failed to fetch messages");
-
-    // Optionally map receipts directly into message objects
     return data.messages.map((msg: any) => ({
         ...msg,
         isRead: msg.receipts?.[0]?.isRead || false,
         readAt: msg.receipts?.[0]?.readAt || null,
     }));
 };
+
 
 /**
  * Fetch all conversations for the current user
@@ -161,14 +160,20 @@ export const addUsersToConversation = async (
     token: string,
     userIds: number[]
 ) => {
-    const res = await axios.post(
-        `${BASE_URL}/conversations/add-members`,
-        { conversationId, userIds },
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const addedMembers = [];
 
-    return res.data.members; // returns array of added users
+    for (const userId of userIds) {
+        const res = await axios.post(
+            `${BASE_URL}/conversations/add-member`,
+            { conversationId, userIdToAdd: userId },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        addedMembers.push(res.data.member);
+    }
+
+    return addedMembers;
 };
+
 
 /**
  * Remove a user from a conversation (admin/owner only)
