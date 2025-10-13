@@ -130,14 +130,19 @@ export const Login: React.FC = () => {
                             </motion.p>
                         )}
 
-                        <div className="flex justify-center">
+                        <div className="relative flex justify-center">
                             <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
                                 onError={() => setError("Google sign-in failed.")}
                                 useOneTap={false}
                                 auto_select={false}
-                                disabled={loginLoading}
                             />
+                            {loginLoading && (
+                                <div
+                                    className="absolute inset-0 bg-black/20 cursor-not-allowed"
+                                    title="Logging in..."
+                                />
+                            )}
                         </div>
                         <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
                             <span className="px-2">or</span>
