@@ -1,4 +1,5 @@
 import { prisma } from "../prisma/prisma.js"
+import { SYSTEM_ID } from "../systemId.js";
 
 // Get all conversation for user
 // Get all conversations for user (with unread count)
@@ -102,6 +103,38 @@ export const getMessagesFromConversation = async (req, res) => {
         res.status(500).json({ error: "Error getting messages from conversation" });
     }
 }
+// update Conversation name
+
+// Update conversation name
+export const updateConversationName = async (req, res) => {
+    try {
+        const { conversationId, newName } = req.body;
+        const userId = req.user.userId;
+
+        if (!conversationId || !newName) {
+            return res.status(400).json({ error: "conversationId and newName are required" });
+        }
+
+        // Check if user is part of conversation and is OWNER or ADMIN
+        const membership = await prisma.userConversation.findUnique({
+            where: { userId_conversationId: { userId, conversationId } },
+        });
+
+        if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+            return res.status(403).json({ error: "Not allowed to rename this conversation" });
+        }
+
+        const updated = await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { name: newName, updatedAt: new Date() },
+        });
+
+        res.json({ message: "Conversation name updated", conversation: updated });
+    } catch (error) {
+        console.error("❌ Error updating conversation name:", error);
+        res.status(500).json({ error: "Failed to update conversation name" });
+    }
+};
 
 // Create a conversation
 export const createConversation = async (req, res) => {
@@ -218,7 +251,7 @@ export const addMemberToConversation = async (req, res) => {
             data: {
                 text: `${newMember.user.username} joined the conversation.`,
                 type: "SYSTEM",
-                senderId: null, // or a dedicated system user ID
+                senderId: SYSTEM_ID,
                 conversationId: conversationId,
             },
         });
@@ -230,6 +263,56 @@ export const addMemberToConversation = async (req, res) => {
     } catch (error) {
         console.error("❌ Error adding member:", error);
         res.status(500).json({ error: "Error adding member to conversation" });
+    }
+};
+
+export const removeMemberFromConversation = async (req, res) => {
+    const { conversationId, userIdToRemove } = req.body;
+    const currentUserId = req.user.userId;
+
+    if (!conversationId || !userIdToRemove) {
+        return res.status(400).json({ error: "conversationId and userIdToRemove are required" });
+    }
+
+    try {
+        // Check that current user is OWNER or ADMIN
+        const requesterMembership = await prisma.userConversation.findUnique({
+            where: { userId_conversationId: { userId: currentUserId, conversationId } },
+        });
+
+        if (!requesterMembership || !["OWNER", "ADMIN"].includes(requesterMembership.role)) {
+            return res.status(403).json({ error: "Not allowed to remove members" });
+        }
+
+        // Ensure user to remove exists
+        const memberToRemove = await prisma.userConversation.findUnique({
+            where: { userId_conversationId: { userId: userIdToRemove, conversationId } },
+            include: { user: true },
+        });
+
+        if (!memberToRemove) {
+            return res.status(404).json({ error: "User not in conversation" });
+        }
+
+        // Delete user from conversation
+        await prisma.userConversation.delete({
+            where: { userId_conversationId: { userId: userIdToRemove, conversationId } },
+        });
+
+        // Create system message
+        await prisma.message.create({
+            data: {
+                text: `${memberToRemove.user.username} was removed from the conversation.`,
+                type: "SYSTEM",
+                senderId: SYSTEM_ID,
+                conversationId,
+            },
+        });
+
+        res.json({ message: "User removed", member: memberToRemove });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to remove user" });
     }
 };
 export const leaveConversation = async (req, res) => {
@@ -278,7 +361,7 @@ export const leaveConversation = async (req, res) => {
             data: {
                 text: `${existing.user.username} left the conversation.`,
                 type: "SYSTEM",
-                senderId: existing.user.id, // optional; you can create a fake "system" user later if you want
+                senderId: SYSTEM_ID,
                 conversationId: id,
             },
         });
@@ -291,3 +374,40 @@ export const leaveConversation = async (req, res) => {
         return res.status(500).json({ message: "Failed to leave conversation" });
     }
 };
+export const deleteConversation = async (req, res) => {
+    const { conversationId } = req.params;
+    const currentUserId = req.user.userId;
+
+    if (!conversationId) {
+        return res.status(400).json({ error: "conversationId is required" });
+    }
+
+    try {
+        // ✅ Check if the user is part of the conversation
+        const membership = await prisma.userConversation.findUnique({
+            where: {
+                userId_conversationId: { userId: currentUserId, conversationId: Number(conversationId) },
+            },
+        });
+
+        if (!membership) {
+            return res.status(403).json({ error: "You are not a member of this conversation" });
+        }
+
+        // ✅ Only OWNER or ADMIN can delete
+        if (!["OWNER", "ADMIN"].includes(membership.role)) {
+            return res.status(403).json({ error: "You are not allowed to delete this conversation" });
+        }
+
+        // ✅ Delete the conversation
+        await prisma.conversation.delete({
+            where: { id: Number(conversationId) },
+        });
+
+        res.json({ message: "Conversation deleted successfully" });
+    } catch (error) {
+        console.error("❌ Error deleting conversation:", error);
+        res.status(500).json({ error: "Error deleting conversation" });
+    }
+};
+

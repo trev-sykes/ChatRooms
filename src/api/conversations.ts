@@ -15,7 +15,6 @@ export const fetchMessages = async (conversationId: number, token: string) => {
         headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    console.log("RAW messages from API:", data.messages); // 🔍
     if (!res.ok) throw new Error(data.message || "Failed to fetch messages");
     return data.messages.map((msg: any) => ({
         ...msg,
@@ -23,7 +22,22 @@ export const fetchMessages = async (conversationId: number, token: string) => {
         readAt: msg.receipts?.[0]?.readAt || null,
     }));
 };
+/**
+ * Update the name of a conversation (admin/owner only)
+ */
+export const updateConversationName = async (
+    conversationId: number,
+    token: string,
+    newName: string
+) => {
+    const res = await axios.put(
+        `${BASE_URL}/conversations/update-name`,
+        { conversationId, newName },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
 
+    return res.data.conversation; // return updated conversation info
+};
 
 /**
  * Fetch all conversations for the current user
@@ -204,6 +218,13 @@ export const leaveConversation = async (conversationId: number, token: string) =
 
     return res.data.message; // e.g., "Left conversation"
 };
+export const deleteConversation = async (conversationId: number, token: any) => {
+    const res = await axios.delete(
+        `${BASE_URL}/conversations/${conversationId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    )
+    return res.data.message;
+}
 
 /**
  * Mark all messages in a conversation as read

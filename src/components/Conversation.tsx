@@ -30,7 +30,7 @@ interface ConversationUser {
 interface Message {
     id: number;
     text: string;
-    type: "TEXT" | "IMAGE" | "FILE" | "SYSTEM"; // 🆕 add SYSTEM
+    type: "TEXT" | "IMAGE" | "FILE" | "SYSTEM";
     sender?: {
         id: number;
         username: string;
@@ -227,7 +227,6 @@ export const Conversation: React.FC = () => {
                     fetchConversationUsers(numericConversationId, token),
                 ]);
 
-                console.log("Fetched messages:", msgs); // 🔍 Add this
                 setMessages(msgs);
                 setConversationName(name);
                 setParticipants(users);
@@ -248,12 +247,14 @@ export const Conversation: React.FC = () => {
             {/* Modals */}
             {isAdmin && (
                 <AdminModal
+                    token={token}
                     isOpen={isAdminModalOpen}
                     onClose={() => setIsAdminModalOpen(false)}
                     participants={participants}
                     currentUserId={user!.id}
                     isOwner={isOwner}
                     conversationId={numericConversationId}
+                    conversationName={conversationName}
                     onRemoveUser={handleRemoveUser}
                     onInviteClick={() => setIsAddUserModalOpen(true)}
                     onLeave={handleLeaveConversation}
@@ -327,13 +328,15 @@ export const Conversation: React.FC = () => {
                                     Admin
                                 </Button>
                             )}
-                            <Button
-                                variant="secondary"
-                                size="xs"
-                                onClick={() => setIsLeaveModalOpen(true)}
-                            >
-                                Leave
-                            </Button>
+                            {!isAdmin && (
+                                <Button
+                                    variant="secondary"
+                                    size="xs"
+                                    onClick={() => setIsLeaveModalOpen(true)}
+                                >
+                                    Leave
+                                </Button>
+                            )}
                         </div>
                     </div>
                 )}

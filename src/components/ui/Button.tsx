@@ -5,7 +5,7 @@ type ButtonProps = {
     children: React.ReactNode;
     onClick?: () => void;
     type?: "button" | "submit" | "reset";
-    variant?: "primary" | "secondary" | "cta" | "login";
+    variant?: "primary" | "secondary" | "cta" | "login" | "destructive";
     size?: "xs" | "sm" | "md" | "lg";      // 👈 add size prop
     className?: string;
     disabled?: boolean;
@@ -43,7 +43,10 @@ export const Button: React.FC<ButtonProps> = ({
             "w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-lg hover:opacity-90 transition-all",
         login:
             "w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-lg hover:opacity-90 transition-all",
+        destructive:
+            "bg-red-600 text-white hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/30", // ✅ new variant
     };
+
 
     return (
         <motion.button

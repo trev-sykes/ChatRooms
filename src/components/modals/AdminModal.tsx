@@ -1,7 +1,9 @@
 // AdminModal.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
+import { useNavigate } from "react-router-dom";
+import { deleteConversation, updateConversationName } from "../../api/conversations";
 
 interface ConversationUser {
     id: number;
@@ -11,33 +13,48 @@ interface ConversationUser {
 }
 
 interface AdminModalProps {
+    token: any;
     isOpen: boolean;
     onClose: () => void;
     participants: ConversationUser[];
     currentUserId: number;
     isOwner: boolean;
     conversationId: number;
+    conversationName: string;
     onRemoveUser: (userId: number) => void;
     onInviteClick: () => void;
-    onLeave: () => void;
+    onLeave?: () => void;
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
+    token,
     isOpen,
     onClose,
     participants,
     currentUserId,
     isOwner,
     conversationId,
+    conversationName,
     onRemoveUser,
     onInviteClick,
-    onLeave,
 }) => {
+    const navigate = useNavigate();
+
     const [confirmAction, setConfirmAction] = useState<{
-        type: "remove" | "leave";
+        type: "remove" | "leave" | "delete";
         userId?: number;
         username?: string;
     } | null>(null);
+
+    const [editingName, setEditingName] = useState<string>("");
+    const [isSavingName, setIsSavingName] = useState(false);
+
+    // Initialize conversation name when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setEditingName(conversationName || "");
+        }
+    }, [isOpen, conversationName]);
 
     const handleConfirmRemove = () => {
         if (confirmAction?.type === "remove" && confirmAction.userId) {
@@ -46,10 +63,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         }
     };
 
-    const handleConfirmLeave = () => {
-        if (confirmAction?.type === "leave") {
-            onLeave();
-            setConfirmAction(null);
+    const handleSaveName = async () => {
+        if (!conversationId || !editingName.trim()) return;
+        setIsSavingName(true);
+        try {
+            const updatedConversation = await updateConversationName(
+                conversationId,
+                token,
+                editingName.trim()
+            );
+            // Optionally update local state
+            setEditingName(updatedConversation.name);
+            setIsSavingName(false);
+        } catch (err) {
+            console.error("Failed to update conversation name:", err);
+            setIsSavingName(false);
         }
     };
 
@@ -60,21 +88,49 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 onClose={onClose}
                 title="Manage Conversation"
                 footer={
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={onClose}
-                    >
+                    <Button variant="secondary" size="sm" onClick={onClose}>
                         Close
                     </Button>
                 }
             >
                 <div className="flex flex-col gap-4">
+                    {/* Conversation Name Editor */}
+                    <div className="mb-4">
+                        <label className="text-sm text-gray-400 mb-1 block">
+                            Conversation Name
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                className="flex-1 p-2 rounded bg-white/5 text-white text-sm outline-none"
+                                disabled={!isOwner || isSavingName}
+                            />
+                            {isOwner && (
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleSaveName}
+                                    disabled={isSavingName}
+                                >
+                                    {isSavingName ? "Saving..." : "Save"}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Participants */}
                     <div>
-                        <h4 className="font-semibold text-sm text-gray-200 mb-3">Participants</h4>
+                        <h4 className="font-semibold text-sm text-gray-200 mb-3">
+                            Participants
+                        </h4>
                         <ul className="flex flex-col gap-2 max-h-[40vh] overflow-y-auto">
-                            {participants.map(p => (
-                                <li key={p.id} className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
+                            {participants.map((p) => (
+                                <li
+                                    key={p.id}
+                                    className="flex justify-between items-center p-2 bg-white/5 rounded-lg"
+                                >
                                     <div className="flex items-center gap-2 flex-1 min-w-0">
                                         <img
                                             src={p.profilePicture || "https://placehold.co/32x32"}
@@ -90,7 +146,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                                         <Button
                                             variant="secondary"
                                             size="sm"
-                                            onClick={() => setConfirmAction({ type: "remove", userId: p.id, username: p.username })}
+                                            onClick={() =>
+                                                setConfirmAction({
+                                                    type: "remove",
+                                                    userId: p.id,
+                                                    username: p.username,
+                                                })
+                                            }
                                             className="ml-2"
                                         >
                                             Remove
@@ -101,6 +163,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </ul>
                     </div>
 
+                    {/* Actions */}
                     <Button
                         variant="primary"
                         size="sm"
@@ -109,32 +172,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     >
                         Invite Users
                     </Button>
-
-                    {conversationId !== 1 && (
+                    {isOwner && (
                         <Button
-                            variant="secondary"
+                            variant="destructive"
                             size="sm"
-                            onClick={() => setConfirmAction({ type: "leave" })}
+                            onClick={() => setConfirmAction({ type: "delete" })}
                             className="w-full"
                         >
-                            Leave Conversation
+                            Delete Conversation
                         </Button>
                     )}
                 </div>
             </Modal>
 
-            {/* Confirmation Modal for Remove User */}
+            {/* Remove User Modal */}
             <Modal
                 isOpen={confirmAction?.type === "remove"}
                 onClose={() => setConfirmAction(null)}
                 title="Remove User?"
                 footer={
                     <>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setConfirmAction(null)}
-                        >
+                        <Button variant="secondary" size="sm" onClick={() => setConfirmAction(null)}>
                             Cancel
                         </Button>
                         <Button
@@ -158,37 +216,38 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </div>
             </Modal>
 
-            {/* Confirmation Modal for Leave Conversation */}
+            {/* Delete Conversation Modal */}
             <Modal
-                isOpen={confirmAction?.type === "leave"}
+                isOpen={confirmAction?.type === "delete"}
                 onClose={() => setConfirmAction(null)}
-                title="Leave Conversation?"
+                title="Delete Conversation?"
                 footer={
                     <>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setConfirmAction(null)}
-                        >
+                        <Button variant="secondary" size="sm" onClick={() => setConfirmAction(null)}>
                             Cancel
                         </Button>
                         <Button
                             variant="primary"
                             size="sm"
-                            onClick={handleConfirmLeave}
+                            onClick={async () => {
+                                if (!conversationId) return;
+                                try {
+                                    await deleteConversation(conversationId, token);
+                                    navigate("/home");
+                                } catch (err) {
+                                    console.error("Failed to delete conversation:", err);
+                                }
+                            }}
                             className="bg-red-600 hover:bg-red-700"
                         >
-                            Leave
+                            Delete
                         </Button>
                     </>
                 }
             >
                 <div className="flex flex-col gap-3">
                     <p className="text-gray-200">
-                        Are you sure you want to leave this conversation?
-                    </p>
-                    <p className="text-sm text-gray-400">
-                        You will no longer see messages in this conversation. This action cannot be undone.
+                        Are you sure you want to <strong>delete</strong> this conversation? This action cannot be undone.
                     </p>
                 </div>
             </Modal>

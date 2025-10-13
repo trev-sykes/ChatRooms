@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as conversationController from "../controllers/conversationController.js";
 import authMiddleware from "./middleware/authMiddleware.js";
+
 const conversationRoutes = new Router();
 // Protected routes
 
@@ -19,9 +20,17 @@ conversationRoutes.post("/", authMiddleware, conversationController.createConver
 //  Add member route
 conversationRoutes.post("/add-member", authMiddleware, conversationController.addMemberToConversation);
 
+// Update conversation name
+conversationRoutes.put("/update-name", authMiddleware, conversationController.updateConversationName);
+
+// Remove member route
+conversationRoutes.post("/remove-member", authMiddleware, conversationController.removeMemberFromConversation);
+
 // Leave a conversation
 conversationRoutes.post("/leave", authMiddleware, conversationController.leaveConversation);
 
+// Delete a conversation
+conversationRoutes.delete('/:conversationId', authMiddleware, conversationController.deleteConversation);
 
 export default conversationRoutes;
 

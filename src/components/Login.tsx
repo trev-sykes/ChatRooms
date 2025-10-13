@@ -136,6 +136,7 @@ export const Login: React.FC = () => {
                                 onError={() => setError("Google sign-in failed.")}
                                 useOneTap={false}
                                 auto_select={false}
+                                disabled={loginLoading}
                             />
                         </div>
                         <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
