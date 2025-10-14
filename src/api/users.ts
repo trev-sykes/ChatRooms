@@ -25,6 +25,7 @@ export const updateUserAvatar = async (
 
     return data;
 };
+
 export async function updateProfile(token: string, updates: { bio?: string; isDiscoverable?: boolean }) {
     const res = await fetch(`${BASE_URL}/users/profile`, {
         method: "PUT",
@@ -39,6 +40,14 @@ export async function updateProfile(token: string, updates: { bio?: string; isDi
     return data.user;
 }
 
+export const fetchUser = async (token: any, userId: number) => {
+    const res = await fetch(`${BASE_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch user");
+    return data.user;
+}
 /**
  * Fetch all users in the system
  * @param token - Auth token

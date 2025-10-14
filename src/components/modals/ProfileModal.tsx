@@ -28,6 +28,8 @@ export const ProfileModal: React.FC = () => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [text, setText] = useState("");
     const [sending, setSending] = useState(false);
+    const [isOnline, setIsOnline] = useState(false);
+
     const { userId } = useParams<{ userId: string }>();
     const numericUserId = Number(userId);
     const navigate = useNavigate();
@@ -57,6 +59,42 @@ export const ProfileModal: React.FC = () => {
 
         fetchData();
     }, [token, numericUserId]);
+    useEffect(() => {
+        if (!user) return;
+
+        const ws = new WebSocket("ws://localhost:4000"); // your WS URL
+
+        ws.onopen = () => {
+            console.log("WebSocket connected");
+
+            // Optionally notify server you are "viewing this profile"
+            ws.send(JSON.stringify({
+                type: "profile_view",
+                viewerId: user.id,
+                viewedUserId: numericUserId
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            // Listen for presence updates
+            if (data.type === "presence" && data.userId === numericUserId) {
+                setIsOnline(data.online);
+            }
+
+            // Optionally: handle lastSeen if server sends it
+            if (data.type === "last_seen" && data.userId === numericUserId) {
+                setUser(prev => prev ? { ...prev, lastSeen: data.lastSeen } : prev);
+            }
+        };
+
+        ws.onclose = () => console.log("WebSocket disconnected");
+        ws.onerror = (err) => console.error("WS error", err);
+
+        return () => ws.close();
+    }, [numericUserId, user]);
+
 
     const existingConversation = conversations.find(
         (c) => c.users.some((u) => u.id === numericUserId)
@@ -109,10 +147,12 @@ export const ProfileModal: React.FC = () => {
         </PageWrapper>
     );
 
-    const isOnline = selectedUser?.lastSeen
+    const derivedIsOnline = selectedUser?.lastSeen
         ? new Date(selectedUser.lastSeen).getTime() > Date.now() - 60 * 1000
-        : true; // if no lastSeen, consider online
+        : true;
 
+    // Use `isOnline || derivedIsOnline` to combine WS + lastSeen fallback
+    const displayOnline = isOnline || derivedIsOnline;
 
     return (
         <PageWrapper centered>
@@ -135,10 +175,17 @@ export const ProfileModal: React.FC = () => {
                     <motion.img
                         src={selectedUser.profilePicture || "https://placehold.co/120x120"}
                         alt={selectedUser.username}
-                        className={`w-32 h-32 rounded-full object-cover shadow-md border-4 ${isOnline ? 'border-green-400' : 'border-gray-600'}`}
+                        className={`w-32 h-32 rounded-full object-cover shadow-md border-4 ${displayOnline ? 'border-green-400' : 'border-gray-600'}`}
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.2 }}
                     />
+
+
+                    <p className={`text-center text-xs mt-1 ${displayOnline ? 'text-green-400' : 'text-gray-400'}`}>
+                        {displayOnline ? "Online" : `Last seen: ${formatLastSeen(selectedUser.lastSeen)}`}
+                    </p>
+
+
 
                     {/* Username */}
                     <h2 className="text-2xl font-bold text-white text-center">{selectedUser.username}</h2>

@@ -13,11 +13,11 @@ import { LeaveConversationModal } from "./modals/LeaveConversationModal";
 import {
     fetchMessages,
     fetchConversationName,
-    sendMessage,
     fetchConversationUsers,
     addUsersToConversation,
     removeUserFromConversation,
-    leaveConversation
+    leaveConversation,
+    sendMessage
 } from "../api/conversations";
 
 interface ConversationUser {
@@ -55,9 +55,15 @@ export const Conversation: React.FC = () => {
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+    const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [allUsers, setAllUsers] = useState<ConversationUser[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
+
     const numericConversationId = Number(conversationId);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+    const [socket, setSocket] = useState<WebSocket | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,6 +83,18 @@ export const Conversation: React.FC = () => {
             setSelectedUsers([]);
         } catch (err) {
             console.error(err);
+        }
+    };
+    const handleTyping = (text: string) => {
+        setNewMessage(text);
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "typing",
+                userId: user!.id,
+                username: user!.username,
+                conversationId: numericConversationId
+            }));
         }
     };
 
@@ -100,26 +118,27 @@ export const Conversation: React.FC = () => {
     };
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || !token || !numericConversationId) return;
-
-        const tempMessage: Message = {
-            id: Date.now(),
+        if (!newMessage.trim() || !user || !token) return;
+        setSending(true);
+        const payload = {
+            type: "message",
             text: newMessage,
-            type: "TEXT", // ✅ Add this
-            sender: { id: user!.id, username: user!.username },
-            createdAt: new Date().toISOString(),
+            userId: user.id,
+            conversationId: numericConversationId,
         };
 
-        setMessages(prev => [...prev, tempMessage]);
         setNewMessage("");
-        setSending(true);
 
         try {
-            const message = await sendMessage(numericConversationId, token, newMessage);
-            setMessages(prev => prev.map(msg => msg.id === tempMessage.id ? message : msg));
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(payload));
+            } else {
+                // fallback to HTTP
+                await sendMessage(numericConversationId, token, payload.text);
+            }
         } catch (err) {
-            console.error(err);
-            setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+            console.error("Failed to send message:", err);
+            alert("Message could not be sent.");
         } finally {
             setSending(false);
         }
@@ -240,6 +259,77 @@ export const Conversation: React.FC = () => {
         loadConversation();
     }, [token, conversationId]);
 
+    useEffect(() => {
+        if (!numericConversationId || !user) return;
+
+        const ws = new WebSocket("ws://localhost:4000"); // 👈 your WS server URL
+        setSocket(ws);
+
+        ws.onopen = () => {
+            console.log("✅ WebSocket connected");
+            // Optional: join the conversation "room"
+            ws.send(JSON.stringify({
+                type: "join",
+                userId: user.id,
+                conversationId: numericConversationId,
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "chat") {
+                if (data.message.senderId === user.id) return; // already displayed optimistically
+                setMessages(prev => {
+                    const exists = prev.some(
+                        m =>
+                            m.sender?.id === data.message.senderId &&
+                            m.text === data.message.text &&
+                            Math.abs(new Date(m.createdAt).getTime() - new Date(data.message.createdAt).getTime()) < 2000 // within 2s
+                    );
+                    return exists ? prev : [...prev, data.message];
+                });
+            }
+            if (data.type === "typing" && data.userId !== user!.id) {
+                setTypingUsers(prev => {
+                    if (!prev.includes(data.username)) return [...prev, data.username];
+                    return prev;
+                });
+
+                // Clear previous timeout for this user
+                const prevTimeout = typingTimeouts.current.get(data.username);
+                if (prevTimeout) clearTimeout(prevTimeout);
+
+                // Set new timeout for this user
+                const timeout = setTimeout(() => {
+                    setTypingUsers(prev => prev.filter(u => u !== data.username));
+                    typingTimeouts.current.delete(data.username);
+                }, 2000); // slightly longer than typing interval
+
+                typingTimeouts.current.set(data.username, timeout);
+            }
+            if (data.type === "presence_init") {
+                setOnlineUsers(new Set(data.users));
+            }
+
+            if (data.type === "presence") {
+                setOnlineUsers(prev => {
+                    const newSet = new Set(prev);
+                    if (data.online) newSet.add(data.userId);
+                    else newSet.delete(data.userId);
+                    return newSet;
+                });
+            }
+
+        };
+        ws.onclose = () => console.log("❌ WebSocket disconnected");
+        ws.onerror = (err) => console.error("⚠️ WS Error", err);
+
+        return () => ws.close();
+    }, [numericConversationId, user]);
+    useEffect(() => {
+        console.log("USER TYPING", typingUsers);
+    }, [typingUsers])
     return (
         <PageWrapper centered>
             <BackgroundOrbs variant="chat" />
@@ -307,7 +397,8 @@ export const Conversation: React.FC = () => {
                                     src={p.profilePicture || "https://placehold.co/40x40"}
                                     alt={p.username}
                                     title={p.username}
-                                    className="w-10 h-10 rounded-full border-2 border-slate-800 object-cover cursor-pointer"
+                                    className={`w-10 h-10 rounded-full border-2 object-cover cursor-pointer
+                                    ${onlineUsers.has(p.id) ? "border-green-400" : "border-slate-800"}`}
                                     whileHover={{ scale: 1.1 }}
                                     initial={{ opacity: 0, y: 20, scale: 0.8 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -315,6 +406,7 @@ export const Conversation: React.FC = () => {
                                     onClick={() => navigate(`/user/${p.id}`)}
                                 />
                             ))}
+
                         </div>
 
                         {/* Grouped Admin + Leave buttons */}
@@ -406,10 +498,18 @@ export const Conversation: React.FC = () => {
                                                     {new Date(msg.createdAt).toLocaleString()}
                                                 </div>
                                             </div>
+
                                         </motion.div>
                                     );
                                 })
                             )}
+                            {typingUsers.length > 0 &&
+                                (
+                                    <div className="text-sm text-gray-300 italic">
+                                        {typingUsers.join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
+                                    </div>
+                                )
+                            }
                             <div ref={messagesEndRef} />
                         </CardContent>
 
@@ -417,7 +517,7 @@ export const Conversation: React.FC = () => {
                         <CardFooter className="flex gap-3 flex-col sm:flex-row w-full mt-2">
                             <TextInput
                                 value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
+                                onChange={(e) => handleTyping(e.target.value)}
                                 placeholder="Type your message..."
                                 onKeyDown={e => e.key === "Enter" && handleSendMessage()}
                                 disabled={sending}
