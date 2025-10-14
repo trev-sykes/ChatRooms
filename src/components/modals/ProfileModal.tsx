@@ -19,8 +19,8 @@ interface Conversation {
     id: number;
     users: { id: number; username: string }[];
 }
-
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const WS_URL = BASE_URL.replace(/^http/, "ws");
 
 export const ProfileModal: React.FC = () => {
     const { user, token } = useUser();
@@ -62,7 +62,7 @@ export const ProfileModal: React.FC = () => {
     useEffect(() => {
         if (!user) return;
 
-        const ws = new WebSocket("ws://localhost:4000"); // your WS URL
+        const ws = new WebSocket(WS_URL); // your WS URL
 
         ws.onopen = () => {
             console.log("WebSocket connected");

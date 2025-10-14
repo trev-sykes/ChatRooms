@@ -40,7 +40,7 @@ interface Message {
 }
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+const WS_URL = BASE_URL.replace(/^http/, "ws");
 export const Conversation: React.FC = () => {
     const navigate = useNavigate();
     const { token, user } = useUser();
@@ -262,7 +262,7 @@ export const Conversation: React.FC = () => {
     useEffect(() => {
         if (!numericConversationId || !user) return;
 
-        const ws = new WebSocket("ws://localhost:4000"); // 👈 your WS server URL
+        const ws = new WebSocket(WS_URL); // 👈 your WS server URL
         setSocket(ws);
 
         ws.onopen = () => {
