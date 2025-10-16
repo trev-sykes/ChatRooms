@@ -10,6 +10,7 @@ import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import { createUser } from "../api/auth";
 import axios from "axios";
+import { Loader } from "./ui/Loader";
 
 export const SignUp: React.FC = () => {
     const apiUrl = import.meta.env.VITE_API_BASE_URL;
@@ -126,14 +127,22 @@ export const SignUp: React.FC = () => {
                             </motion.p>
                         )}
 
-                        {/* Google Sign-In Button */}
+                        {/* Google Sign-up Button */}
                         <div className="flex justify-center mb-4">
-                            <GoogleLogin
-                                onSuccess={handleGoogleSuccess}
-                                onError={() => setStatus("Google sign-up failed.")}
-                                useOneTap={false}
-                                auto_select={false}
-                            />
+                            {loading ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                                    <div className="flex items-center gap-2">
+                                        <Loader />
+                                    </div>
+                                </div>
+                            ) : (
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => setStatus("Google sign-up failed.")}
+                                    useOneTap={false}
+                                    auto_select={false}
+                                />
+                            )}
                         </div>
 
                         <div className="my-4 flex items-center justify-center text-gray-400 text-sm">

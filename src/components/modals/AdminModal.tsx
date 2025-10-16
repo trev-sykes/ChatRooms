@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
-import { useNavigate } from "react-router-dom";
 import { deleteConversation, updateConversationName } from "../../api/conversations";
+import { ConfirmationModal } from "./ConfirmModal";
+import { useUser } from "../../context/UserContext";
+import { useNavigate } from "react-router-dom";
 
 interface ConversationUser {
     id: number;
@@ -38,8 +40,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     onRemoveUser,
     onInviteClick,
 }) => {
+    const { user } = useUser();
     const navigate = useNavigate();
-
     const [confirmAction, setConfirmAction] = useState<{
         type: "remove" | "leave" | "delete";
         userId?: number;
@@ -126,40 +128,42 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             Participants
                         </h4>
                         <ul className="flex flex-col gap-2 max-h-[40vh] overflow-y-auto">
-                            {participants.map((p) => (
-                                <li
-                                    key={p.id}
-                                    className="flex justify-between items-center p-2 bg-white/5 rounded-lg"
-                                >
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <img
-                                            src={p.profilePicture || "https://placehold.co/32x32"}
-                                            alt={p.username}
-                                            className="w-6 h-6 rounded-full object-cover"
-                                        />
-                                        <span className="text-sm truncate">{p.username}</span>
-                                        <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded">
-                                            {p.role}
-                                        </span>
-                                    </div>
-                                    {p.id !== currentUserId && isOwner && (
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() =>
-                                                setConfirmAction({
-                                                    type: "remove",
-                                                    userId: p.id,
-                                                    username: p.username,
-                                                })
-                                            }
-                                            className="ml-2"
-                                        >
-                                            Remove
-                                        </Button>
-                                    )}
-                                </li>
-                            ))}
+                            {participants
+                                .filter(p => p.id !== user?.id)
+                                .map((p) => (
+                                    <li
+                                        key={p.id}
+                                        className="flex justify-between items-center p-2 bg-white/5 rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <img
+                                                src={p.profilePicture || "https://placehold.co/32x32"}
+                                                alt={p.username}
+                                                className="w-6 h-6 rounded-full object-cover"
+                                            />
+                                            <span className="text-sm truncate">{p.username}</span>
+                                            <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded">
+                                                {p.role}
+                                            </span>
+                                        </div>
+                                        {p.id !== currentUserId && isOwner && (
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setConfirmAction({
+                                                        type: "remove",
+                                                        userId: p.id,
+                                                        username: p.username,
+                                                    })
+                                                }
+                                                className="ml-2"
+                                            >
+                                                Remove
+                                            </Button>
+                                        )}
+                                    </li>
+                                ))}
                         </ul>
                     </div>
 
@@ -186,71 +190,32 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </Modal>
 
             {/* Remove User Modal */}
-            <Modal
+            <ConfirmationModal
                 isOpen={confirmAction?.type === "remove"}
-                onClose={() => setConfirmAction(null)}
-                title="Remove User?"
-                footer={
-                    <>
-                        <Button variant="secondary" size="sm" onClick={() => setConfirmAction(null)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleConfirmRemove}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            Remove
-                        </Button>
-                    </>
-                }
-            >
-                <div className="flex flex-col gap-3">
-                    <p className="text-gray-200">
-                        Are you sure you want to remove <strong>{confirmAction?.username}</strong> from this conversation?
-                    </p>
-                    <p className="text-sm text-gray-400">
-                        This action cannot be undone.
-                    </p>
-                </div>
-            </Modal>
+                title={"Remove User?"}
+                action={"Remove"}
+                description={`Are you sure you want to remove ${confirmAction?.username} from this conversation? This action cannot be undone.`}
+                onConfirm={handleConfirmRemove}
+                onClose={setConfirmAction}
+            />
 
             {/* Delete Conversation Modal */}
-            <Modal
+            <ConfirmationModal
                 isOpen={confirmAction?.type === "delete"}
-                onClose={() => setConfirmAction(null)}
-                title="Delete Conversation?"
-                footer={
-                    <>
-                        <Button variant="secondary" size="sm" onClick={() => setConfirmAction(null)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={async () => {
-                                if (!conversationId) return;
-                                try {
-                                    await deleteConversation(conversationId, token);
-                                    navigate("/home");
-                                } catch (err) {
-                                    console.error("Failed to delete conversation:", err);
-                                }
-                            }}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            Delete
-                        </Button>
-                    </>
-                }
-            >
-                <div className="flex flex-col gap-3">
-                    <p className="text-gray-200">
-                        Are you sure you want to <strong>delete</strong> this conversation? This action cannot be undone.
-                    </p>
-                </div>
-            </Modal>
+                title={"Delete Conversation"}
+                action={"Delete"}
+                description={" Are you sure you want to delete this conversation? This action cannot be undone."}
+                onConfirm={async () => {
+                    try {
+                        await deleteConversation(conversationId, token);
+                    } catch (err: any) {
+                        console.error(err.message);
+                    } finally {
+                        navigate("/home");
+                    }
+                }}
+                onClose={setConfirmAction}
+            />
         </>
     );
 };

@@ -355,7 +355,14 @@ export const leaveConversation = async (req, res) => {
                 },
             },
         });
+        // Check if any users remain
+        const remainingUsers = await prisma.userConversation.findMany({
+            where: { conversationId: id },
+        });
 
+        if (remainingUsers.length === 0) {
+            await prisma.conversation.delete({ where: { id } });
+        }
         // Create a SYSTEM message saying they left
         await prisma.message.create({
             data: {
@@ -365,9 +372,10 @@ export const leaveConversation = async (req, res) => {
                 conversationId: id,
             },
         });
-
         return res.status(200).json({
-            message: "You have left the conversation",
+            message: remainingUsers.length === 0
+                ? "You have left and the conversation was deleted"
+                : "You have left the conversation",
         });
     } catch (error) {
         console.error("❌ Error leaving conversation:", error);

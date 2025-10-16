@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { TextInput } from "./TextInput";
-import { motion, AnimatePresence } from "framer-motion"; // ✅ import AnimatePresence
+import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "./Loader";
 import { useDebounce } from "../../hooks/useDebounce";
 
@@ -62,7 +62,7 @@ export const UserSearchList: React.FC<Props> = ({
                         transition={{ duration: 0.2 }}
                     >
                         {search && debouncedSearch !== search ? (
-                            <Loader /> // show loader while debounce is active
+                            <Loader />
                         ) : filteredUsers.length > 0 ? (
                             filteredUsers.map(user => (
                                 <motion.button
@@ -70,8 +70,8 @@ export const UserSearchList: React.FC<Props> = ({
                                     type="button"
                                     onClick={() => onToggleUser(user.id)}
                                     className={`flex justify-between items-center p-2 rounded hover:bg-gray-800 transition-colors ${selectedUserIds.includes(user.id)
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-gray-700 text-gray-200"
+                                        ? "bg-indigo-600 text-white"
+                                        : "bg-gray-700 text-gray-200"
                                         }`}
                                     whileTap={{ scale: 0.95 }}
                                 >

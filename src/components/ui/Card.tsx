@@ -1,18 +1,25 @@
+import React from "react";
+
 type CardProps = {
     children: React.ReactNode;
     className?: string;
 };
 
-export function Card({ children, className }: CardProps) {
-    return (
-        <div
-            className={`w-full mx-auto rounded-xl max-sm:rounded-lg bg-slate-800/80 shadow-md max-sm:shadow-sm border border-slate-700 mb-5 ${className || ""}`}
-        >
-            {children}
-        </div>
-    );
-}
-
+// ✅ forwardRef lets parent components attach refs to this div
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+    ({ children, className }, ref) => {
+        return (
+            <div
+                ref={ref}
+                className={`w-full mx-auto rounded-xl max-sm:rounded-lg bg-slate-800/80 shadow-md max-sm:shadow-sm border border-slate-700 mb-5 ${className || ""}`}
+            >
+                {children}
+            </div>
+        );
+    }
+);
+// ✅ Optional: give the component a display name (helps with dev tools)
+Card.displayName = "Card";
 export function CardHeader({ children, className }: CardProps) {
     return (
         <div

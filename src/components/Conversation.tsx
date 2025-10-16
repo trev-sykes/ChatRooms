@@ -60,14 +60,23 @@ export const Conversation: React.FC = () => {
     const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
 
     const numericConversationId = Number(conversationId);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
     const [socket, setSocket] = useState<WebSocket | null>(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: "smooth",
+            });
+        }
     };
+    // const scrollToBottom = () => {
+    //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // };
 
     useEffect(() => {
         scrollToBottom();
@@ -234,9 +243,9 @@ export const Conversation: React.FC = () => {
     const currentUserParticipant = participants.find(p => p.id === user!.id);
     const isAdmin = currentUserParticipant?.role === "ADMIN" || currentUserParticipant?.role === "OWNER";
     const isOwner = currentUserParticipant?.role === "OWNER";
+
     useEffect(() => {
         if (!token || !numericConversationId) return;
-
         const loadConversation = async () => {
             try {
                 setLoading(true);
@@ -245,7 +254,6 @@ export const Conversation: React.FC = () => {
                     fetchConversationName(numericConversationId, token, user!.id),
                     fetchConversationUsers(numericConversationId, token),
                 ]);
-
                 setMessages(msgs);
                 setConversationName(name);
                 setParticipants(users);
@@ -267,7 +275,6 @@ export const Conversation: React.FC = () => {
 
         ws.onopen = () => {
             console.log("✅ WebSocket connected");
-            // Optional: join the conversation "room"
             ws.send(JSON.stringify({
                 type: "join",
                 userId: user.id,
@@ -304,7 +311,7 @@ export const Conversation: React.FC = () => {
                 const timeout = setTimeout(() => {
                     setTypingUsers(prev => prev.filter(u => u !== data.username));
                     typingTimeouts.current.delete(data.username);
-                }, 2000); // slightly longer than typing interval
+                }, 2000);
 
                 typingTimeouts.current.set(data.username, timeout);
             }
@@ -330,6 +337,13 @@ export const Conversation: React.FC = () => {
     useEffect(() => {
         console.log("USER TYPING", typingUsers);
     }, [typingUsers])
+
+    useEffect(() => {
+        console.log("Participants:", participants);
+        console.log("User:", user);
+        console.log("currentUserParticipant:", currentUserParticipant);
+    }, [participants, user]);
+
     return (
         <PageWrapper centered>
             <BackgroundOrbs variant="chat" />
@@ -391,21 +405,23 @@ export const Conversation: React.FC = () => {
 
                         {/* Participant images */}
                         <div className="flex gap-2 flex-wrap">
-                            {participants.map((p, index) => (
-                                <motion.img
-                                    key={p.id}
-                                    src={p.profilePicture || "https://placehold.co/40x40"}
-                                    alt={p.username}
-                                    title={p.username}
-                                    className={`w-10 h-10 rounded-full border-2 object-cover cursor-pointer
+                            {participants
+                                .filter(u => u.id !== user?.id)
+                                .map((p, index) => (
+                                    <motion.img
+                                        key={p.id}
+                                        src={p.profilePicture || "https://placehold.co/40x40"}
+                                        alt={p.username}
+                                        title={p.username}
+                                        className={`w-10 h-10 rounded-full border-2 object-cover cursor-pointer
                                     ${onlineUsers.has(p.id) ? "border-green-400" : "border-slate-800"}`}
-                                    whileHover={{ scale: 1.1 }}
-                                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                                    onClick={() => navigate(`/user/${p.id}`)}
-                                />
-                            ))}
+                                        whileHover={{ scale: 1.1 }}
+                                        initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                                        onClick={() => navigate(`/user/${p.id}`)}
+                                    />
+                                ))}
 
                         </div>
 
@@ -439,7 +455,10 @@ export const Conversation: React.FC = () => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <Card className="flex-1 overflow-y-auto max-h-[70vh] flex flex-col">
+                    <Card
+                        ref={messagesContainerRef}
+                        className="flex-1 overflow-y-auto max-h-[70vh] flex flex-col"
+                    >
                         <CardContent className="flex flex-col gap-3 p-4 sm:p-6">
                             {loading ? (
                                 <div className="flex justify-center py-6">
@@ -493,7 +512,11 @@ export const Conversation: React.FC = () => {
                                                     : "bg-white/20 text-white"
                                                     }`}
                                             >
-                                                <strong>{msg.sender?.username}</strong>: {msg.text}
+                                                {msg.sender?.id !== user?.id && (
+                                                    <strong className="block text-sm text-gray-300 mb-1">
+                                                        {msg.sender?.username}
+                                                    </strong>
+                                                )} {msg.text}
                                                 <div className="text-xs text-gray-300 mt-1">
                                                     {new Date(msg.createdAt).toLocaleString()}
                                                 </div>
@@ -510,7 +533,6 @@ export const Conversation: React.FC = () => {
                                     </div>
                                 )
                             }
-                            <div ref={messagesEndRef} />
                         </CardContent>
 
                         {/* Message input */}

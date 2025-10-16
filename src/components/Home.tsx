@@ -38,7 +38,6 @@ export const Home = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const debouncedSearchTerm = useDebounce(searchTerm, 400); // 👈 optional delay
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isNewConvoOpen, setIsNewConvoOpen] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState("");
@@ -67,7 +66,9 @@ export const Home = () => {
         const loadUsers = async () => {
             try {
                 const users = await fetchAllUsers(token);
-                setAllUsers(users.filter((u: any) => u.id !== user?.id));
+                setAllUsers(users.filter((u: any) => {
+                    return u.id !== user?.id
+                }));
             } catch (err) {
                 console.error(err);
             }
@@ -259,20 +260,23 @@ export const Home = () => {
                                                         {/* Avatars (max 3 stacked) */}
                                                         <div className="flex -space-x-2 ml-4">
                                                             {convo.users.length > 0 ? (
-                                                                convo.users.slice(0, 3).map((u, index) => (
-                                                                    <motion.img
-                                                                        key={u.id}
-                                                                        src={
-                                                                            u.profilePicture ||
-                                                                            "https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg"
-                                                                        }
-                                                                        alt={u.username}
-                                                                        className="w-9 h-9 rounded-full border-2 border-slate-800 object-cover"
-                                                                        style={{ zIndex: convo.users.length - index }}
-                                                                        whileHover={{ scale: 1.1 }}
-                                                                        transition={{ duration: 0.2 }}
-                                                                    />
-                                                                ))
+                                                                convo.users
+                                                                    .filter(u => u.id !== user.id)
+                                                                    .slice(0, 3)
+                                                                    .map((u, index) => (
+                                                                        <motion.img
+                                                                            key={u.id}
+                                                                            src={
+                                                                                u.profilePicture ||
+                                                                                "https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg"
+                                                                            }
+                                                                            alt={u.username}
+                                                                            className="w-9 h-9 rounded-full border-2 border-slate-800 object-cover"
+                                                                            style={{ zIndex: convo.users.length - index }}
+                                                                            whileHover={{ scale: 1.1 }}
+                                                                            transition={{ duration: 0.2 }}
+                                                                        />
+                                                                    ))
                                                             ) : (
                                                                 <img
                                                                     src="https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg"
