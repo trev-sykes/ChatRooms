@@ -10,7 +10,6 @@ import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { AdminModal } from "./modals/AdminModal";
 import { AddUsersModal } from "./modals/AddUsersModal";
 import { LeaveConversationModal } from "./modals/LeaveConversationModal";
-import { useConversations } from "../context/ConversationContext";
 import {
     fetchMessages,
     fetchConversationName,
@@ -59,14 +58,10 @@ export const Conversation: React.FC = () => {
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [allUsers, setAllUsers] = useState<ConversationUser[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
-
     const numericConversationId = Number(conversationId);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
-
     const [socket, setSocket] = useState<WebSocket | null>(null);
-    const { markAsRead } = useConversations();
-    const hasMarkedRead = useRef(false);
     const scrollToBottom = () => {
         const container = messagesContainerRef.current;
         if (container) {
