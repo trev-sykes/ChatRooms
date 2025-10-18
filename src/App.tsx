@@ -21,8 +21,8 @@ function App() {
   const isHealthy: null | boolean = useWakeServer();
   return (
     <GoogleOAuthProvider clientId={VITE_GOOGLE_CLIENT_ID}>
-      <ConversationProvider>
-        <UserProvider>
+      <UserProvider>
+        <ConversationProvider>
           <Router>
             <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
               <NavBar />
@@ -70,8 +70,8 @@ function App() {
               <ServerStatusToast status={isHealthy} />
             </div>
           </Router>
-        </UserProvider >
-      </ConversationProvider>
+        </ConversationProvider>
+      </UserProvider >
     </GoogleOAuthProvider>
   );
 }

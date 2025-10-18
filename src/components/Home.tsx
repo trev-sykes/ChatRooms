@@ -103,14 +103,10 @@ export const Home = () => {
             try {
                 const convos = await apiFetchConversations(token);
 
-                // Merge unread counts from context
-                const merged = convos.map((convo: any) => ({
-                    ...convo,
-                    unreadCount: unread[convo.id] ?? convo.unreadCount ?? 0,
-                }));
-                initializeUnread(merged);
-                setConversations(merged);
-                setFilteredConvos(merged);
+                // ✅ Trust server unreadCount entirely
+                initializeUnread(convos);
+                setConversations(convos);
+                setFilteredConvos(convos);
             } catch (err) {
                 console.error("Error fetching conversations:", err);
             } finally {

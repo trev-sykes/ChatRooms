@@ -66,7 +66,7 @@ export const Conversation: React.FC = () => {
 
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const { markAsRead } = useConversations();
-
+    const hasMarkedRead = useRef(false);
     const scrollToBottom = () => {
         const container = messagesContainerRef.current;
         if (container) {
@@ -271,43 +271,44 @@ export const Conversation: React.FC = () => {
 
         return () => ws.close();
     }, [numericConversationId, user]);
-    useEffect(() => {
-        if (!token || !numericConversationId) return;
+    // useEffect(() => {
+    //     if (!token || !numericConversationId || hasMarkedRead.current) return;
 
-        const loadAndMarkRead = async () => {
-            try {
-                setLoading(true);
+    //     const loadAndMarkRead = async () => {
+    //         try {
+    //             setLoading(true);
 
-                // fetch messages, name, users
-                const [msgs, name, users] = await Promise.all([
-                    fetchMessages(numericConversationId, token),
-                    fetchConversationName(numericConversationId, token, user!.id),
-                    fetchConversationUsers(numericConversationId, token),
-                ]);
+    //             // fetch messages, name, users
+    //             const [msgs, name, users] = await Promise.all([
+    //                 fetchMessages(numericConversationId, token),
+    //                 fetchConversationName(numericConversationId, token, user!.id),
+    //                 fetchConversationUsers(numericConversationId, token),
+    //             ]);
 
-                setMessages(msgs);
-                setConversationName(name);
-                setParticipants(users);
+    //             setMessages(msgs);
+    //             setConversationName(name);
+    //             setParticipants(users);
 
-                // mark as read in backend and in context
-                await fetch(`${BASE_URL}/messages/${numericConversationId}/read`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ confirm: true }),
-                });
-                markAsRead(numericConversationId);
+    //             // mark as read in backend and in context
+    //             await fetch(`${BASE_URL}/messages/${numericConversationId}/read`, {
+    //                 method: "POST",
+    //                 headers: {
+    //                     Authorization: `Bearer ${token}`,
+    //                     "Content-Type": "application/json",
+    //                 },
+    //                 body: JSON.stringify({ confirm: true }),
+    //             });
+    //             markAsRead(numericConversationId);
+    //             hasMarkedRead.current = true;
 
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadAndMarkRead();
-    }, [token, numericConversationId]);
+    //         } catch (err) {
+    //             console.error(err);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+    //     loadAndMarkRead();
+    // }, [token, numericConversationId]);
 
     return (
         <PageWrapper centered>

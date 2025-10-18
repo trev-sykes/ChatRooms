@@ -115,7 +115,7 @@ wss.on("connection", (ws) => {
                         isRead: false
                     },
                     data: {
-                        isRead: false,
+                        isRead: true,
                         readAt: new Date()
                     }
                 });
@@ -127,7 +127,7 @@ wss.on("connection", (ws) => {
 
         if (msg.type === "message") {
             try {
-                // 🧩 1. Store the message in your Postgres DB
+                // 1. Store the message
                 const savedMessage = await prisma.message.create({
                     data: {
                         text: msg.text,
@@ -136,11 +136,32 @@ wss.on("connection", (ws) => {
                         type: msg.messageType || "TEXT",
                     },
                     include: {
-                        sender: true, // Include user info if you want to send back
+                        sender: true,
                     },
                 });
 
-                // 🧩 2. Broadcast to all users in this conversation
+                // 2. Get all users in this conversation (except the sender)
+                const conversationUsers = await prisma.userConversation.findMany({
+                    where: { conversationId: msg.conversationId },
+                    select: { userId: true }
+                });
+
+                // 3. Create unread receipts for everyone except the sender
+                const receipts = conversationUsers
+                    .filter(uc => uc.userId !== msg.userId)
+                    .map(uc => ({
+                        messageId: savedMessage.id,
+                        userId: uc.userId,
+                        isRead: false,
+                    }));
+
+                if (receipts.length > 0) {
+                    await prisma.messageReceipt.createMany({
+                        data: receipts
+                    });
+                }
+
+                // 4. Broadcast to all users
                 wss.clients.forEach(client => {
                     if (client.readyState === ws.OPEN) {
                         client.send(JSON.stringify({
@@ -158,7 +179,6 @@ wss.on("connection", (ws) => {
                                 createdAt: savedMessage.createdAt,
                             }
                         }));
-
                     }
                 });
 
