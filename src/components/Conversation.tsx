@@ -210,13 +210,17 @@ export const Conversation: React.FC = () => {
                 userId: user.id,
                 conversationId: numericConversationId
             }));
+            // Explicitly mark as online
+            ws.send(JSON.stringify({
+                type: "presence",
+                userId: user.id,
+                online: true
+            }));
 
         };
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-
-
             if (data.type === "chat") {
                 if (data.message.senderId === user.id) return; // already displayed optimistically
                 setMessages(prev => {

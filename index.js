@@ -102,6 +102,23 @@ wss.on("connection", (ws) => {
             currentUserId = msg.userId;
             onlineUsers.set(currentUserId, ws);
 
+            // Send the new client the list of currently online users
+            ws.send(JSON.stringify({
+                type: "presence_init",
+                users: Array.from(onlineUsers.keys())
+            }));
+
+            // Broadcast to all other clients that this user is online
+            wss.clients.forEach(client => {
+                if (client !== ws && client.readyState === ws.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "presence",
+                        userId: currentUserId,
+                        online: true
+                    }));
+                }
+            });
+
             ws.send(JSON.stringify({
                 type: "joined_conversation",
                 conversationId: msg.conversationId
