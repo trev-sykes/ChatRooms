@@ -11,7 +11,7 @@ export const getGlobalMessages = async (req, res) => {
             orderBy: { createdAt: "asc" },
             include: {
                 sender: { select: { id: true, username: true, profilePicture: true } },
-                receipts: { where: { userId: req.user.userId }, select: { isRead: true, readAt: true } }
+                receipts: { where: { userId: req.user.userId }, select: { isRead: false, readAt: true } }
             }
         });
 
@@ -126,9 +126,15 @@ export const sendMessage = async (req, res) => {
 export const markMessagesAsRead = async (req, res) => {
     const userId = req.user.userId;
     const conversationId = Number(req.params.conversationId);
+    const confirm = req.body?.confirm === true;
+
+    console.log(`[markMessagesAsRead] user=${userId} conversation=${conversationId} confirm=${confirm} from ${req.ip}`);
+
+    if (!confirm) {
+        return res.status(400).json({ error: "Missing confirm flag in body. Send { confirm: true } to mark as read." });
+    }
 
     try {
-        // Only update receipts for unread messages
         const updated = await prisma.messageReceipt.updateMany({
             where: {
                 userId,
@@ -137,6 +143,7 @@ export const markMessagesAsRead = async (req, res) => {
             },
             data: { isRead: true, readAt: new Date() }
         });
+
         const unreadCount = await prisma.messageReceipt.count({
             where: { userId, isRead: false }
         });
@@ -147,6 +154,7 @@ export const markMessagesAsRead = async (req, res) => {
         res.status(500).json({ error: "Error marking messages as read" });
     }
 };
+
 /**
  * Fetch all message receipts in a conversation
  */

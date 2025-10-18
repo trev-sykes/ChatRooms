@@ -14,8 +14,9 @@ import { getAvatarUrl } from "../utils/avatars";
 import { avatarOptions } from "../utils/avatarOptions";
 import { EditProfileModal } from "./modals/EditProfileModal";
 import { useHeartbeat } from "../hooks/useHeartbeat";
-
 import { useDebounce } from "../hooks/useDebounce";
+import { useConversations } from "../context/ConversationContext";
+
 
 
 
@@ -26,7 +27,8 @@ interface Conversation {
     users: { id: number; username: string; profilePicture?: string }[];
     _count?: { messages: number };
 }
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const WS_URL = BASE_URL.replace(/^http/, "ws");
 export const Home = () => {
     useHeartbeat()
     const { user, token, logout, updateAvatar } = useUser();
@@ -42,8 +44,54 @@ export const Home = () => {
     const [isNewConvoOpen, setIsNewConvoOpen] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState("");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const { unread, incrementUnread, initializeUnread } = useConversations();
 
+    useEffect(() => {
+        if (!token || !user) return;
 
+        const ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                type: "join_home",
+                userId: user.id
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "chat") {
+                const message = data.message;
+
+                // Ignore messages sent by yourself
+                if (message.sender.id === user.id) return;
+                incrementUnread(message.conversationId);
+
+                // Optionally still update lastMessage locally
+                setConversations(prev =>
+                    prev.map(convo =>
+                        convo.id === message.conversationId
+                            ? {
+                                ...convo,
+                                lastMessage: message.text,
+                                lastMessageAt: message.createdAt,
+                            }
+                            : convo
+                    )
+                );
+            }
+
+            if (data.type === "presence") {
+                // Optional: update online status if you show online badges in Home
+            }
+        };
+
+        ws.onclose = () => { };
+        ws.onerror = (err) => console.error("⚠️ WS Error", err);
+
+        return () => ws.close();
+    }, [token, user]);
     useEffect(() => {
         if (!token) {
             setLoading(false);
@@ -54,8 +102,15 @@ export const Home = () => {
             setLoading(true);
             try {
                 const convos = await apiFetchConversations(token);
-                setConversations(convos);
-                setFilteredConvos(convos);
+
+                // Merge unread counts from context
+                const merged = convos.map((convo: any) => ({
+                    ...convo,
+                    unreadCount: unread[convo.id] ?? convo.unreadCount ?? 0,
+                }));
+                initializeUnread(merged);
+                setConversations(merged);
+                setFilteredConvos(merged);
             } catch (err) {
                 console.error("Error fetching conversations:", err);
             } finally {
@@ -73,7 +128,6 @@ export const Home = () => {
                 console.error(err);
             }
         };
-
         loadConversations();
         loadUsers();
     }, [token]);
@@ -247,14 +301,16 @@ export const Home = () => {
                                                                         .map((u) => u.username)
                                                                         .join(", ")}
                                                                 {/* 🔹 Add unread badge here */}
-                                                                {convo.unreadCount > 0 && (
+                                                                {unread[convo.id] > 0 && (
                                                                     <span className="ml-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                                                                        {convo.unreadCount}
+                                                                        {unread[convo.id]}
                                                                     </span>
                                                                 )}
                                                             </h3>
                                                             <p className="text-sm text-gray-400 mt-1">
-                                                                {convo._count?.messages || 0} messages
+                                                                {unread[convo.id] > 0
+                                                                    ? `${unread[convo.id]} unread • ${convo._count?.messages || 0} total`
+                                                                    : `${convo._count?.messages || 0} messages`}
                                                             </p>
                                                         </div>
                                                         {/* Avatars (max 3 stacked) */}

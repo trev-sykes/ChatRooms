@@ -149,7 +149,7 @@ export const Login: React.FC = () => {
 
                         </div>
                         <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
-                            <span className="px-2">or</span>
+                            {!loginLoading && <span className="px-2">or</span>}
                         </div>
 
                         <form className="space-y-4">

@@ -13,60 +13,65 @@ import { useWakeServer } from './hooks/useWakeServer';
 import { ServerStatusToast } from './components/toasts/ServerStatusToast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { IsOnlineToast } from './components/toasts/IsOnlineToast';
+import { ConversationProvider } from './context/ConversationContext';
+import { NotificationTitle } from './components/NotificationTitle';
 
 function App() {
   const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const isHealthy: null | boolean = useWakeServer();
   return (
     <GoogleOAuthProvider clientId={VITE_GOOGLE_CLIENT_ID}>
-      <UserProvider>
-        <Router>
-          <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
-            <NavBar />
-            <main className="flex-1 flex flex-col pt-4">
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route
-                  path="/home"
-                  element={
-                    <ProtectedRoute>
-                      <Home />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={
-                    <PublicRoute>
-                      <Login />
-                    </PublicRoute>
-                  }
-                />
-                <Route
-                  path="/create"
-                  element={
-                    <PublicRoute>
-                      <SignUp />
-                    </PublicRoute>
-                  }
-                />
-                <Route path="/user/:userId" element={<ProfileModal />} />
-                <Route
-                  path="/conversation/:conversationId"
-                  element={
-                    <ProtectedRoute>
-                      <Conversation />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-            <IsOnlineToast />
-            <ServerStatusToast status={isHealthy} />
-          </div>
-        </Router>
-      </UserProvider >
+      <ConversationProvider>
+        <UserProvider>
+          <Router>
+            <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
+              <NavBar />
+              <main className="flex-1 flex flex-col pt-4">
+                <NotificationTitle appName="ChatRooms" />
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route
+                    path="/home"
+                    element={
+                      <ProtectedRoute>
+                        <Home />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/login"
+                    element={
+                      <PublicRoute>
+                        <Login />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path="/create"
+                    element={
+                      <PublicRoute>
+                        <SignUp />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route path="/user/:userId" element={<ProfileModal />} />
+                  <Route
+                    path="/conversation/:conversationId"
+                    element={
+                      <ProtectedRoute>
+                        <Conversation />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+              <IsOnlineToast />
+              <ServerStatusToast status={isHealthy} />
+            </div>
+          </Router>
+        </UserProvider >
+      </ConversationProvider>
     </GoogleOAuthProvider>
   );
 }

@@ -78,6 +78,51 @@ wss.on("connection", (ws) => {
                 }
             });
         }
+        if (msg.type === "join_home") {
+            currentUserId = msg.userId;
+            onlineUsers.set(currentUserId, ws);
+
+            ws.send(JSON.stringify({
+                type: "presence_init",
+                users: Array.from(onlineUsers.keys())
+            }));
+
+            wss.clients.forEach(client => {
+                if (client !== ws && client.readyState === ws.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "presence",
+                        userId: currentUserId,
+                        online: true
+                    }));
+                }
+            });
+        }
+        if (msg.type === "join_conversation") {
+            currentUserId = msg.userId;
+            onlineUsers.set(currentUserId, ws);
+
+            ws.send(JSON.stringify({
+                type: "joined_conversation",
+                conversationId: msg.conversationId
+            }));
+
+            // Mark messages as read for this user in that conversation
+            try {
+                await prisma.messageReceipt.updateMany({
+                    where: {
+                        userId: msg.userId,
+                        message: { conversationId: msg.conversationId },
+                        isRead: false
+                    },
+                    data: {
+                        isRead: false,
+                        readAt: new Date()
+                    }
+                });
+            } catch (err) {
+                logger.error("Error marking as read:", err);
+            }
+        }
 
 
         if (msg.type === "message") {

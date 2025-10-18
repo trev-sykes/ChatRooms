@@ -10,6 +10,7 @@ import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { AdminModal } from "./modals/AdminModal";
 import { AddUsersModal } from "./modals/AddUsersModal";
 import { LeaveConversationModal } from "./modals/LeaveConversationModal";
+import { useConversations } from "../context/ConversationContext";
 import {
     fetchMessages,
     fetchConversationName,
@@ -64,6 +65,7 @@ export const Conversation: React.FC = () => {
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
     const [socket, setSocket] = useState<WebSocket | null>(null);
+    const { markAsRead } = useConversations();
 
     const scrollToBottom = () => {
         const container = messagesContainerRef.current;
@@ -74,10 +76,6 @@ export const Conversation: React.FC = () => {
             });
         }
     };
-    // const scrollToBottom = () => {
-    //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    // };
-
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -202,71 +200,9 @@ export const Conversation: React.FC = () => {
             fetchAllUsers();
         }
     }, [token, isAdminModalOpen, participants]);
-    useEffect(() => {
-        if (!token || !numericConversationId) return;
-
-        const markAsRead = async () => {
-            try {
-                await fetch(`${BASE_URL}/messages/${numericConversationId}/read`, {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            } catch (err) {
-                console.error("Error marking messages as read:", err);
-            }
-        };
-
-        markAsRead();
-
-        // Then load messages
-        const loadConversation = async () => {
-            try {
-                setLoading(true);
-                const [msgs, name, users] = await Promise.all([
-                    fetchMessages(numericConversationId, token),
-                    fetchConversationName(numericConversationId, token, user!.id),
-                    fetchConversationUsers(numericConversationId, token),
-                ]);
-                setMessages(msgs);
-                setConversationName(name);
-                setParticipants(users);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadConversation();
-    }, [token, conversationId]);
-
     const currentUserParticipant = participants.find(p => p.id === user!.id);
     const isAdmin = currentUserParticipant?.role === "ADMIN" || currentUserParticipant?.role === "OWNER";
     const isOwner = currentUserParticipant?.role === "OWNER";
-
-    useEffect(() => {
-        if (!token || !numericConversationId) return;
-        const loadConversation = async () => {
-            try {
-                setLoading(true);
-                const [msgs, name, users] = await Promise.all([
-                    fetchMessages(numericConversationId, token),
-                    fetchConversationName(numericConversationId, token, user!.id),
-                    fetchConversationUsers(numericConversationId, token),
-                ]);
-                setMessages(msgs);
-                setConversationName(name);
-                setParticipants(users);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadConversation();
-    }, [token, conversationId]);
-
     useEffect(() => {
         if (!numericConversationId || !user) return;
 
@@ -274,16 +210,17 @@ export const Conversation: React.FC = () => {
         setSocket(ws);
 
         ws.onopen = () => {
-            console.log("✅ WebSocket connected");
             ws.send(JSON.stringify({
-                type: "join",
+                type: "join_conversation",
                 userId: user.id,
-                conversationId: numericConversationId,
+                conversationId: numericConversationId
             }));
+
         };
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+
 
             if (data.type === "chat") {
                 if (data.message.senderId === user.id) return; // already displayed optimistically
@@ -335,14 +272,42 @@ export const Conversation: React.FC = () => {
         return () => ws.close();
     }, [numericConversationId, user]);
     useEffect(() => {
-        console.log("USER TYPING", typingUsers);
-    }, [typingUsers])
+        if (!token || !numericConversationId) return;
 
-    useEffect(() => {
-        console.log("Participants:", participants);
-        console.log("User:", user);
-        console.log("currentUserParticipant:", currentUserParticipant);
-    }, [participants, user]);
+        const loadAndMarkRead = async () => {
+            try {
+                setLoading(true);
+
+                // fetch messages, name, users
+                const [msgs, name, users] = await Promise.all([
+                    fetchMessages(numericConversationId, token),
+                    fetchConversationName(numericConversationId, token, user!.id),
+                    fetchConversationUsers(numericConversationId, token),
+                ]);
+
+                setMessages(msgs);
+                setConversationName(name);
+                setParticipants(users);
+
+                // mark as read in backend and in context
+                await fetch(`${BASE_URL}/messages/${numericConversationId}/read`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ confirm: true }),
+                });
+                markAsRead(numericConversationId);
+
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadAndMarkRead();
+    }, [token, numericConversationId]);
 
     return (
         <PageWrapper centered>
