@@ -16,6 +16,7 @@ import { EditProfileModal } from "./modals/EditProfileModal";
 import { useHeartbeat } from "../hooks/useHeartbeat";
 import { useDebounce } from "../hooks/useDebounce";
 import { useConversations } from "../context/ConversationContext";
+import { NotificationTitle } from "./NotificationTitle";
 
 
 
@@ -160,6 +161,7 @@ export const Home = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+            <NotificationTitle appName={`ChatRooms - ${user.username}`} />
             <div className="max-w-6xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Profile Card */}

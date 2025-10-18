@@ -3,13 +3,14 @@ import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws"; // 👈 import ws
 import http from "http"; // 👈 needed for wrapping express
-import { prisma } from "./prisma/prisma.js";
 import authRoutes from "./routes/auth.js";
 import messageRoutes from "./routes/message.js";
 import conversationRoutes from "./routes/conversation.js";
 import userRoutes from "./routes/user.js";
 import healthRoutes from "./routes/health.js";
 import winston from "winston";
+import { messageService } from "./services/messageService.js";
+import { conversationService } from "./services/conversationService.js";
 
 const logger = winston.createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -108,17 +109,7 @@ wss.on("connection", (ws) => {
 
             // Mark messages as read for this user in that conversation
             try {
-                await prisma.messageReceipt.updateMany({
-                    where: {
-                        userId: msg.userId,
-                        message: { conversationId: msg.conversationId },
-                        isRead: false
-                    },
-                    data: {
-                        isRead: true,
-                        readAt: new Date()
-                    }
-                });
+                await messageService.markMessagesAsRead(msg.userId, msg.conversationId);
             } catch (err) {
                 logger.error("Error marking as read:", err);
             }
@@ -128,38 +119,21 @@ wss.on("connection", (ws) => {
         if (msg.type === "message") {
             try {
                 // 1. Store the message
-                const savedMessage = await prisma.message.create({
-                    data: {
-                        text: msg.text,
-                        senderId: msg.userId,
-                        conversationId: msg.conversationId,
-                        type: msg.messageType || "TEXT",
-                    },
-                    include: {
-                        sender: true,
-                    },
+                const savedMessage = await messageService.createMessage({
+                    text: msg.text,
+                    senderId: msg.userId,
+                    conversationId: msg.conversationId,
+                    type: msg.messageType
                 });
 
                 // 2. Get all users in this conversation (except the sender)
-                const conversationUsers = await prisma.userConversation.findMany({
-                    where: { conversationId: msg.conversationId },
-                    select: { userId: true }
-                });
+                const recipientIds = await conversationService.getUnreadRecipientIds(
+                    msg.conversationId,
+                    msg.userId
+                );
 
                 // 3. Create unread receipts for everyone except the sender
-                const receipts = conversationUsers
-                    .filter(uc => uc.userId !== msg.userId)
-                    .map(uc => ({
-                        messageId: savedMessage.id,
-                        userId: uc.userId,
-                        isRead: false,
-                    }));
-
-                if (receipts.length > 0) {
-                    await prisma.messageReceipt.createMany({
-                        data: receipts
-                    });
-                }
+                await messageService.createMessageReceipts(savedMessage.id, recipientIds);
 
                 // 4. Broadcast to all users
                 wss.clients.forEach(client => {

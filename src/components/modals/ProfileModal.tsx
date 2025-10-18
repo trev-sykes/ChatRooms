@@ -65,8 +65,6 @@ export const ProfileModal: React.FC = () => {
         const ws = new WebSocket(WS_URL); // your WS URL
 
         ws.onopen = () => {
-            console.log("WebSocket connected");
-
             // Optionally notify server you are "viewing this profile"
             ws.send(JSON.stringify({
                 type: "profile_view",

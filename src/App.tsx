@@ -14,7 +14,6 @@ import { ServerStatusToast } from './components/toasts/ServerStatusToast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { IsOnlineToast } from './components/toasts/IsOnlineToast';
 import { ConversationProvider } from './context/ConversationContext';
-import { NotificationTitle } from './components/NotificationTitle';
 
 function App() {
   const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -27,7 +26,6 @@ function App() {
             <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
               <NavBar />
               <main className="flex-1 flex flex-col pt-4">
-                <NotificationTitle appName="ChatRooms" />
                 <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route

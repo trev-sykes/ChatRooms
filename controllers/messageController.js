@@ -1,4 +1,5 @@
-import { prisma } from "../prisma/prisma.js";
+import { conversationService } from "../services/conversationService.js";
+import { messageService } from "../services/messageService.js";
 
 /**
  * Fetch messages for the Global Chat (id = 1)
@@ -6,15 +7,11 @@ import { prisma } from "../prisma/prisma.js";
 export const getGlobalMessages = async (req, res) => {
     const conversationId = 1;
     try {
-        const messages = await prisma.message.findMany({
-            where: { conversationId },
-            orderBy: { createdAt: "asc" },
-            include: {
-                sender: { select: { id: true, username: true, profilePicture: true } },
-                receipts: { where: { userId: req.user.userId }, select: { isRead: false, readAt: true } }
-            }
-        });
 
+        const messages = await messageService.getMessagesForConversation(
+            conversationId,
+            req.user.userId
+        );
 
         res.json({ messages });
     } catch (error) {
@@ -36,28 +33,20 @@ export const getMessagesByConversationId = async (req, res) => {
 
         // ✅ Allow all users to access Global Chat (id = 1)
         if (conversationId !== 1) {
-            const membership = await prisma.userConversation.findUnique({
-                where: {
-                    userId_conversationId: {
-                        userId: req.user.userId,
-                        conversationId
-                    }
-                }
-            });
+            const membership = await conversationService.getUserMembership(
+                req.user.userId,
+                conversationId
+            );
 
             if (!membership) {
                 return res.status(403).json({ error: "Access denied: not a member of this conversation" });
             }
         }
 
-        const messages = await prisma.message.findMany({
-            where: { conversationId },
-            orderBy: { createdAt: "asc" },
-            include: {
-                sender: { select: { id: true, username: true, profilePicture: true } },
-                receipts: { where: { userId: req.user.userId }, select: { isRead: true, readAt: true } }
-            }
-        });
+        const messages = await messageService.getMessagesForConversation(
+            conversationId,
+            req.user.userId
+        );
 
         res.json({ messages });
     } catch (error) {
@@ -76,45 +65,26 @@ export const sendMessage = async (req, res) => {
     try {
         const convId = conversationId ? Number(conversationId) : 1;
 
-        const conversation = await prisma.conversation.findUnique({
-            where: { id: convId },
-            include: { users: true } // get participants
-        });
+        const conversation = await conversationService.getConversationWithUsers(convId);
 
         if (!conversation) {
             return res.status(404).json({ error: "Conversation not found" });
         }
 
-        const membership = await prisma.userConversation.findUnique({
-            where: { userId_conversationId: { userId, conversationId: convId } }
-        });
+        const membership = await conversationService.getUserMembership(userId, convId);
 
-        if (!membership && convId !== 1) return res.status(403).json({ error: "You are not part of this conversation" });
+        if (!membership && convId !== 1) {
+            return res.status(403).json({ error: "You are not part of this conversation" });
+        }
 
-        // Create the message
-        const message = await prisma.message.create({
-            data: {
-                text,
-                senderId: userId,
-                conversationId: convId,
-            },
-            include: {
-                sender: { select: { id: true, username: true, profilePicture: true } }
-            }
-        });
-
-        // ✅ Create receipts for all participants
+        // Get participant IDs
         const participantIds = conversation.users?.map(u => u.userId);
-        const receiptsData = participantIds.map(pid => ({
-            messageId: message.id,
-            userId: pid,
-            isRead: pid === userId, // sender automatically reads their own message
-            readAt: pid === userId ? new Date() : null,
-        }));
 
-        await prisma.messageReceipt.createMany({
-            data: receiptsData
-        });
+        // Create message with receipts
+        const message = await messageService.createMessageWithReceipts(
+            { text, senderId: userId, conversationId: convId },
+            participantIds
+        );
 
         res.json({ message });
     } catch (error) {
@@ -128,25 +98,14 @@ export const markMessagesAsRead = async (req, res) => {
     const conversationId = Number(req.params.conversationId);
     const confirm = req.body?.confirm === true;
 
-    console.log(`[markMessagesAsRead] user=${userId} conversation=${conversationId} confirm=${confirm} from ${req.ip}`);
-
     if (!confirm) {
         return res.status(400).json({ error: "Missing confirm flag in body. Send { confirm: true } to mark as read." });
     }
 
     try {
-        const updated = await prisma.messageReceipt.updateMany({
-            where: {
-                userId,
-                message: { conversationId },
-                isRead: false
-            },
-            data: { isRead: true, readAt: new Date() }
-        });
 
-        const unreadCount = await prisma.messageReceipt.count({
-            where: { userId, isRead: false }
-        });
+        const updated = await messageService.markMessagesAsRead(userId, conversationId);
+        const unreadCount = await messageService.getUnreadCount(userId);
 
         res.json({ updatedCount: updated.count, unreadCount });
     } catch (error) {
@@ -164,31 +123,16 @@ export const getConversationReceipts = async (req, res) => {
 
     try {
         // ✅ Ensure user is part of the conversation
-        const membership = await prisma.userConversation.findUnique({
-            where: {
-                userId_conversationId: {
-                    userId,
-                    conversationId
-                }
-            }
-        });
+        const membership = await conversationService.getUserMembership(userId, conversationId);
 
         if (!membership) {
             return res.status(403).json({ error: "Access denied: not a member of this conversation" });
         }
 
+
         // ✅ Fetch receipts for all messages in this conversation
-        const receipts = await prisma.messageReceipt.findMany({
-            where: {
-                message: { conversationId }
-            },
-            select: {
-                messageId: true,
-                userId: true,
-                isRead: true,
-                readAt: true
-            }
-        });
+        // ✅ Fetch receipts for all messages in this conversation
+        const receipts = await messageService.getConversationReceipts(conversationId);
 
         res.json({ receipts });
     } catch (error) {

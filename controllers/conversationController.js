@@ -1,56 +1,18 @@
-import { prisma } from "../prisma/prisma.js"
 import { SYSTEM_ID } from "../systemId.js";
+import { conversationService } from "../services/conversationService.js";
+import { messageService } from "../services/messageService.js";
 
 // Get all conversation for user
-// Get all conversations for user (with unread count)
 export const getConversations = async (req, res) => {
     const userId = req.user.userId;
-
     try {
         // Fetch all conversations the user is part of, plus the global chat
-        const conversations = await prisma.conversation.findMany({
-            where: {
-                OR: [
-                    { users: { some: { userId } } },
-                    { id: 1 }, // include the global chat
-                ],
-            },
-            include: {
-                users: {
-                    select: {
-                        user: {
-                            select: { id: true, username: true, profilePicture: true },
-                        },
-                        role: true,
-                    },
-                },
-                _count: { select: { messages: true } },
-            },
-            orderBy: { createdAt: "desc" },
-        });
-
+        const conversations = await conversationService.getConversationsForUser(userId);
         // Compute unread count for each conversation
         const formatted = await Promise.all(conversations.map(async (conversation) => {
-            const unreadCount = await prisma.messageReceipt.count({
-                where: {
-                    userId,
-                    isRead: false,
-                    message: { conversationId: conversation.id }
-                }
-            });
-
-            return {
-                ...conversation,
-                users: conversation.users.map(uc => ({
-                    id: uc.user.id,
-                    username: uc.user.username,
-                    profilePicture: uc.user.profilePicture,
-                    role: uc.role,
-                })),
-                unreadCount,
-            };
+            const unreadCount = await conversationService.getUnreadCount(userId, conversation.id);
+            return conversationService.formatConversationWithUnread(conversation, unreadCount);
         }));
-
         res.json({ conversations: formatted });
     } catch (error) {
         console.error("❌ Error getting conversations:", error);
@@ -61,22 +23,9 @@ export const getConversations = async (req, res) => {
 // controllers/conversationController.ts
 export const getConversationUsers = async (req, res) => {
     const conversationId = Number(req.params.id);
-
     try {
-        const users = await prisma.userConversation.findMany({
-            where: { conversationId },
-            include: {
-                user: { select: { id: true, username: true, profilePicture: true } }
-            }
-        });
-
-        const formatted = users.map(uc => ({
-            id: uc.user.id,
-            username: uc.user.username,
-            profilePicture: uc.user.profilePicture,
-            role: uc.role
-        }));
-
+        const users = await conversationService.getConversationUsers(conversationId);
+        const formatted = conversationService.formatConversationUsers(users);
         res.json({ users: formatted });
     } catch (error) {
         console.error(error);
@@ -88,15 +37,10 @@ export const getConversationUsers = async (req, res) => {
 export const getMessagesFromConversation = async (req, res) => {
     try {
         const conversationId = Number(req.params.id);
-        if (!conversationId) res.status(500).json({ error: "Invalid conversation id" });
-
-        const messages = await prisma.message.findMany({
-            where: { conversationId },
-            orderBy: { createdAt: "asc" },
-            include: {
-                sender: { select: { id: true, username: true, profilePicture: true } }
-            }
-        })
+        if (!conversationId) {
+            return res.status(400).json({ error: "Invalid conversation id" });
+        }
+        const messages = await messageService.getMessagesForConversation(conversationId);
         res.json({ messages });
     } catch (error) {
         console.error(error.message);
@@ -116,19 +60,16 @@ export const updateConversationName = async (req, res) => {
         }
 
         // Check if user is part of conversation and is OWNER or ADMIN
-        const membership = await prisma.userConversation.findUnique({
-            where: { userId_conversationId: { userId, conversationId } },
-        });
-
-        if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+        const isAuthorized = await conversationService.isUserAuthorized(
+            userId,
+            conversationId,
+            ["OWNER", "ADMIN"]
+        );
+        if (!isAuthorized) {
             return res.status(403).json({ error: "Not allowed to rename this conversation" });
         }
 
-        const updated = await prisma.conversation.update({
-            where: { id: conversationId },
-            data: { name: newName, updatedAt: new Date() },
-        });
-
+        const updated = await conversationService.updateConversationName(conversationId, newName);
         res.json({ message: "Conversation name updated", conversation: updated });
     } catch (error) {
         console.error("❌ Error updating conversation name:", error);
@@ -148,38 +89,21 @@ export const createConversation = async (req, res) => {
     try {
         // Check for existing 1-on-1 conversation
         if (userIds.length === 1) {
-            const existingConvos = await prisma.conversation.findMany({
-                where: { users: { some: { userId: currentUserId } } },
-                include: { users: true, _count: { select: { users: true } } }
-            });
-
-            const existing = existingConvos.find(c =>
-                c.users.some(u => u.userId === userIds[0]) && c._count.users === 2
+            const existing = await conversationService.findExistingOneOnOne(
+                currentUserId,
+                userIds[0]
             );
-
             if (existing) return res.json({ conversation: existing });
         }
 
-        // Create new conversation
         const otherUserIds = userIds.filter(id => id !== currentUserId);
 
-        const conversation = await prisma.conversation.create({
-            data: {
-                ...(name ? { name } : {}),
-                users: {
-                    create: [
-                        // Creator as OWNER
-                        { user: { connect: { id: currentUserId } }, role: "OWNER" },
-
-                        // Other users as MEMBER
-                        ...otherUserIds.map(id => ({ user: { connect: { id } }, role: "MEMBER" }))
-                    ]
-                }
-            },
-            include: { users: true }
-        });
-
-
+        // Create new conversation
+        const conversation = await conversationService.createConversation(
+            name,
+            currentUserId,
+            otherUserIds
+        );
 
         res.json({ conversation });
     } catch (error) {
@@ -202,59 +126,30 @@ export const addMemberToConversation = async (req, res) => {
 
     try {
         // ✅ Verify current user is in the conversation
-        const requesterMembership = await prisma.userConversation.findUnique({
-            where: {
-                userId_conversationId: { userId: currentUserId, conversationId },
-            },
-        });
-
-        if (!requesterMembership) {
-            return res.status(403).json({ error: "You are not a member of this conversation" });
-        }
-
-        // ✅ Only OWNER or ADMIN can add members
-        if (!["OWNER", "ADMIN"].includes(requesterMembership.role)) {
+        const isAuthorized = await conversationService.isUserAuthorized(
+            currentUserId,
+            conversationId,
+            ["OWNER", "ADMIN"]
+        );
+        if (!isAuthorized) {
             return res.status(403).json({ error: "You are not allowed to add members" });
         }
 
         // ✅ Check if the user to add already exists in conversation
-        const existing = await prisma.userConversation.findUnique({
-            where: {
-                userId_conversationId: { userId: userIdToAdd, conversationId },
-            },
-        });
+        const existing = await conversationService.getUserMembership(userIdToAdd, conversationId);
         if (existing) {
             return res.status(400).json({ error: "User already in conversation" });
         }
 
         // ✅ Add user as MEMBER
-        const newMember = await prisma.userConversation.create({
-            data: {
-                userId: userIdToAdd,
-                conversationId,
-                role: "MEMBER",
-            },
-            include: {
-                user: {
-                    select: { id: true, username: true, profilePicture: true },
-                },
-            },
-        });
+        const newMember = await conversationService.addMember(conversationId, userIdToAdd);
 
-        // ✅ Update updatedAt timestamp
-        await prisma.conversation.update({
-            where: { id: conversationId },
-            data: { updatedAt: new Date() },
-        });
         // After successfully adding the user as a MEMBER
-        await prisma.message.create({
-            data: {
-                text: `${newMember.user.username} joined the conversation.`,
-                type: "SYSTEM",
-                senderId: SYSTEM_ID,
-                conversationId: conversationId,
-            },
-        });
+        await messageService.createSystemMessage(
+            conversationId,
+            `${newMember.user.username} joined the conversation.`,
+            SYSTEM_ID
+        );
 
         res.json({
             message: "User added successfully",
@@ -276,38 +171,32 @@ export const removeMemberFromConversation = async (req, res) => {
 
     try {
         // Check that current user is OWNER or ADMIN
-        const requesterMembership = await prisma.userConversation.findUnique({
-            where: { userId_conversationId: { userId: currentUserId, conversationId } },
-        });
-
-        if (!requesterMembership || !["OWNER", "ADMIN"].includes(requesterMembership.role)) {
+        const isAuthorized = await conversationService.isUserAuthorized(
+            currentUserId,
+            conversationId,
+            ["OWNER", "ADMIN"]
+        );
+        if (!isAuthorized) {
             return res.status(403).json({ error: "Not allowed to remove members" });
         }
-
-        // Ensure user to remove exists
-        const memberToRemove = await prisma.userConversation.findUnique({
-            where: { userId_conversationId: { userId: userIdToRemove, conversationId } },
-            include: { user: true },
-        });
-
+        // Ensure the user is apart of the conversation
+        const memberToRemove = await conversationService.getUserMembership(
+            userIdToRemove,
+            conversationId
+        );
         if (!memberToRemove) {
             return res.status(404).json({ error: "User not in conversation" });
         }
 
         // Delete user from conversation
-        await prisma.userConversation.delete({
-            where: { userId_conversationId: { userId: userIdToRemove, conversationId } },
-        });
+        await conversationService.removeMember(conversationId, userIdToRemove);
 
         // Create system message
-        await prisma.message.create({
-            data: {
-                text: `${memberToRemove.user.username} was removed from the conversation.`,
-                type: "SYSTEM",
-                senderId: SYSTEM_ID,
-                conversationId,
-            },
-        });
+        await messageService.createSystemMessage(
+            conversationId,
+            `${memberToRemove.user.username} was removed from the conversation.`,
+            SYSTEM_ID
+        );
 
         res.json({ message: "User removed", member: memberToRemove });
     } catch (err) {
@@ -332,46 +221,28 @@ export const leaveConversation = async (req, res) => {
         }
 
         // Find the user's membership and username
-        const existing = await prisma.userConversation.findUnique({
-            where: {
-                userId_conversationId: {
-                    userId,
-                    conversationId: id,
-                },
-            },
-            include: { user: true },
-        });
+        const existing = await conversationService.getUserMembership(userId, id);
 
         if (!existing) {
             return res.status(404).json({ message: "You are not part of this conversation" });
         }
 
         // Remove the user from the conversation
-        await prisma.userConversation.delete({
-            where: {
-                userId_conversationId: {
-                    userId,
-                    conversationId: id,
-                },
-            },
-        });
+        await conversationService.removeMember(id, userId);
+
         // Check if any users remain
-        const remainingUsers = await prisma.userConversation.findMany({
-            where: { conversationId: id },
-        });
+        const remainingUsers = await conversationService.getRemainingUsers(id);
 
         if (remainingUsers.length === 0) {
-            await prisma.conversation.delete({ where: { id } });
+            await conversationService.deleteConversation(id);
         }
         // Create a SYSTEM message saying they left
-        await prisma.message.create({
-            data: {
-                text: `${existing.user.username} left the conversation.`,
-                type: "SYSTEM",
-                senderId: SYSTEM_ID,
-                conversationId: id,
-            },
-        });
+        await messageService.createSystemMessage(
+            id,
+            `${existing.user.username} left the conversation.`,
+            SYSTEM_ID
+        );
+
         return res.status(200).json({
             message: remainingUsers.length === 0
                 ? "You have left and the conversation was deleted"
@@ -391,26 +262,21 @@ export const deleteConversation = async (req, res) => {
     }
 
     try {
-        // ✅ Check if the user is part of the conversation
-        const membership = await prisma.userConversation.findUnique({
-            where: {
-                userId_conversationId: { userId: currentUserId, conversationId: Number(conversationId) },
-            },
-        });
+        // ✅ Check if the user is part of the conversation and authorized to delete
+        const isAuthorized = await conversationService.isUserAuthorized(
+            currentUserId,
+            Number(conversationId),
+            ["OWNER", "ADMIN"]
+        );
 
-        if (!membership) {
-            return res.status(403).json({ error: "You are not a member of this conversation" });
-        }
-
-        // ✅ Only OWNER or ADMIN can delete
-        if (!["OWNER", "ADMIN"].includes(membership.role)) {
-            return res.status(403).json({ error: "You are not allowed to delete this conversation" });
+        if (!isAuthorized) {
+            return res.status(403).json({
+                error: "You are not allowed to delete this conversation"
+            });
         }
 
         // ✅ Delete the conversation
-        await prisma.conversation.delete({
-            where: { id: Number(conversationId) },
-        });
+        await conversationService.deleteConversation(Number(conversationId));
 
         res.json({ message: "Conversation deleted successfully" });
     } catch (error) {
