@@ -12,6 +12,17 @@ A modern, full-stack chat application built with **React**, **Vite**, **TypeScri
 |--------------------|-----------------------|
 | ![Chat Interface](screenshots/chat-interface.png) | ![Mobile Navigation](screenshots/mobile-nav.png) |
 
+## Demo
+
+### Typing Indicator
+<video src="videos/typing.mp4" controls width="400" />
+
+### Online Status
+<video src="videos/online-status.mp4" controls width="400" />
+
+### Notifications
+<video src="videos/notification.mp4" controls width="400" />
+
 ## Features
 
 - **Real-time Messaging**: Send and receive messages instantly with a clean, responsive UI.
