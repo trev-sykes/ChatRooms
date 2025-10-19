@@ -176,10 +176,6 @@ export const Login: React.FC = () => {
                                 Log In
                             </Button>
                         </form>
-
-                        <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
-                            <span className="px-2">or</span>
-                        </div>
                     </CardContent>
 
                     <CardFooter>
