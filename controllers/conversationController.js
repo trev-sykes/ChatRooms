@@ -235,6 +235,10 @@ export const leaveConversation = async (req, res) => {
 
         if (remainingUsers.length === 0) {
             await conversationService.deleteConversation(id);
+            return res.status(200).json({
+                message: "You have left and the conversation was deleted",
+            });
+
         }
         // Create a SYSTEM message saying they left
         await messageService.createSystemMessage(
@@ -244,9 +248,7 @@ export const leaveConversation = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: remainingUsers.length === 0
-                ? "You have left and the conversation was deleted"
-                : "You have left the conversation",
+            message: "You have left the conversation",
         });
     } catch (error) {
         console.error("❌ Error leaving conversation:", error);

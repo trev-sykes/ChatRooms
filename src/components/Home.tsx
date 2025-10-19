@@ -1,151 +1,46 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, LogOut } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { fetchConversations as apiFetchConversations } from "../api/conversations";
-import { fetchAllUsers } from "../api/users";
-import { Loader } from "./ui/Loader";
+import { useHomeWebSocket } from "../hooks/useHomeWebsocket";
+import { useHomeData } from "../hooks/useHomeData";
+import { useHeartbeat } from "../hooks/useHeartbeat";
+import { useConversations } from "../context/ConversationContext";
+import { useConversationSearch } from "../hooks/useConversationSearch";
+import { NotificationTitle } from "./NotificationTitle";
+import { ProfileCard } from "./home/ProfileCard";
+import { ConversationsList } from "./home/ConversationsList";
 import { Modal } from "./ui/Modal";
 import { TextInput } from "./ui/TextInput";
 import { Button } from "./ui/Button";
 import { NewConversationModal } from "./modals/NewConversationModal";
+import { EditProfileModal } from "./modals/EditProfileModal";
 import { getAvatarUrl } from "../utils/avatars";
 import { avatarOptions } from "../utils/avatarOptions";
-import { EditProfileModal } from "./modals/EditProfileModal";
-import { useHeartbeat } from "../hooks/useHeartbeat";
-import { useDebounce } from "../hooks/useDebounce";
-import { useConversations } from "../context/ConversationContext";
-import { NotificationTitle } from "./NotificationTitle";
 
-
-
-
-interface Conversation {
-    unreadCount: number;
-    id: number;
-    name?: string | null;
-    users: { id: number; username: string; profilePicture?: string }[];
-    _count?: { messages: number };
-}
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const WS_URL = BASE_URL.replace(/^http/, "ws");
 export const Home = () => {
-    useHeartbeat()
+    useHeartbeat();
     const { user, token, logout, updateAvatar } = useUser();
     const navigate = useNavigate();
 
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [filteredConvos, setFilteredConvos] = useState<Conversation[]>([]);
-    const [allUsers, setAllUsers] = useState<{ id: number; username: string }[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Load data and connect to WebSocket
+    const { conversations, setConversations, allUsers, loading } = useHomeData();
+    useHomeWebSocket(setConversations);
+
+    // Search functionality
     const [searchTerm, setSearchTerm] = useState("");
-    const debouncedSearchTerm = useDebounce(searchTerm, 400); // 👈 optional delay
+    const filteredConvos = useConversationSearch(conversations, searchTerm);
+
+    // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isNewConvoOpen, setIsNewConvoOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState("");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-    const { unread, incrementUnread, initializeUnread } = useConversations();
+    const [avatarUrl, setAvatarUrl] = useState("");
 
-    useEffect(() => {
-        if (!token || !user) return;
-
-        const ws = new WebSocket(WS_URL);
-
-        ws.onopen = () => {
-            ws.send(JSON.stringify({
-                type: "join_home",
-                userId: user.id
-            }));
-        };
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.type === "chat") {
-                const message = data.message;
-
-                // Ignore messages sent by yourself
-                if (message.sender.id === user.id) return;
-                incrementUnread(message.conversationId);
-
-                // Optionally still update lastMessage locally
-                setConversations(prev =>
-                    prev.map(convo =>
-                        convo.id === message.conversationId
-                            ? {
-                                ...convo,
-                                lastMessage: message.text,
-                                lastMessageAt: message.createdAt,
-                            }
-                            : convo
-                    )
-                );
-            }
-
-            if (data.type === "presence") {
-                // Optional: update online status if you show online badges in Home
-            }
-        };
-
-        ws.onclose = () => { };
-        ws.onerror = (err) => console.error("⚠️ WS Error", err);
-
-        return () => ws.close();
-    }, [token, user]);
-    useEffect(() => {
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        const loadConversations = async () => {
-            setLoading(true);
-            try {
-                const convos = await apiFetchConversations(token);
-
-                // ✅ Trust server unreadCount entirely
-                initializeUnread(convos);
-                setConversations(convos);
-                setFilteredConvos(convos);
-            } catch (err) {
-                console.error("Error fetching conversations:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const loadUsers = async () => {
-            try {
-                const users = await fetchAllUsers(token);
-                setAllUsers(users.filter((u: any) => {
-                    return u.id !== user?.id
-                }));
-            } catch (err) {
-                console.error(err);
-            }
-        };
-        loadConversations();
-        loadUsers();
-    }, [token]);
-
-    useEffect(() => {
-        const search = debouncedSearchTerm.toLowerCase();
-        setFilteredConvos(
-            conversations.filter((c) => {
-                const name = c.name?.toLowerCase() || "";
-                const usernames = c.users
-                    .map((u) => u.username?.toLowerCase() || "")
-                    .join(" ");
-                return name.includes(search) || usernames.includes(search);
-            })
-        );
-
-    }, [debouncedSearchTerm, conversations]);
-
+    const { unread } = useConversations();
 
     const goToChat = (id: number) => navigate(`/conversation/${id}`);
-    if (!user)
+
+    if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center text-gray-300 text-xl">
                 Please{" "}
@@ -158,212 +53,34 @@ export const Home = () => {
                 to view your conversations.
             </div>
         );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
             <NotificationTitle appName={`ChatRooms - ${user.username}`} />
+
             <div className="max-w-6xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Profile Card */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-lg">
-                            <h2 className="text-xl font-semibold text-white mb-6">Profile</h2>
+                    <ProfileCard
+                        user={user}
+                        onUpdateAvatar={() => setIsModalOpen(true)}
+                        onEditProfile={() => setIsEditProfileOpen(true)}
+                        onLogout={logout}
+                    />
 
-                            <div className="flex flex-col items-center gap-6">
-                                <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                    {user.profilePicture ? (
-                                        <img
-                                            src={user.profilePicture}
-                                            alt={user.username}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-3xl text-white font-bold">
-                                            {user.username[0].toUpperCase()}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="text-center">
-                                    <h3 className="text-lg font-semibold text-white">
-                                        {user.username}
-                                    </h3>
-                                    <p className="text-sm text-gray-400 mt-1">
-                                        Member since 2025
-                                    </p>
-                                    {/* Bio Section */}
-                                    <div className="text-center mt-4">
-                                        {user.bio ? (
-                                            <p className="text-gray-300 text-sm">{user.bio}</p>
-                                        ) : (
-                                            <button
-                                                onClick={() => setIsEditProfileOpen(true)}
-                                                className="text-indigo-400 text-sm font-semibold hover:text-indigo-300 transition-colors"
-                                            >
-                                                Add a bio
-                                            </button>
-                                        )}
-                                    </div>
-
-                                </div>
-
-                                <div className="w-full flex flex-col gap-3">
-                                    <button
-                                        onClick={() => setIsModalOpen(true)}
-                                        className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors duration-200"
-                                    >
-                                        Update Avatar
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditProfileOpen(true)}
-                                        className="w-full px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold rounded-lg transition-colors duration-200"
-                                    >
-                                        Edit Profile
-                                    </button>
-                                    <button
-                                        onClick={logout}
-                                        className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                                    >
-                                        <LogOut size={18} /> Logout
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Conversations Card */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="lg:col-span-2"
-                    >
-                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
-                            {/* Header */}
-                            <div className="border-b border-slate-700 px-6 py-4 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-white">Conversations</h2>
-                                <Button
-                                    variant="primary"
-                                    size="xs"
-                                    onClick={() => setIsNewConvoOpen(true)}
-                                    className="flex items-center justify-center gap-2 
-               md:px-6 md:py-3 md:text-sm 
-               px-3 py-1 text-xs"
-                                >
-                                    <Plus size={18} />
-                                    <span className="hidden sm:inline">New Conversation</span>
-                                    <span className="inline sm:hidden">New Convo</span>
-                                </Button>
-
-                            </div>
-                            {/* Search */}
-                            <div className="px-6 py-3 border-b border-slate-700 bg-slate-800/50">
-                                <div className="relative">
-                                    <Search size={18} className="absolute left-3 top-3 text-gray-500" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search conversations..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Conversations list */}
-                            <div className="flex-1 overflow-y-auto">
-                                <AnimatePresence mode="wait">
-                                    {loading ? (
-                                        <div className="p-6 text-center">
-                                            <Loader />
-                                        </div>
-                                    ) : filteredConvos.length > 0 ? (
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="divide-y divide-slate-700"
-                                        >
-                                            {filteredConvos.map((convo, index) => (
-                                                <motion.div
-                                                    key={convo.id}
-                                                    initial={{ opacity: 0, x: -10 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                    onClick={() => goToChat(convo.id)}
-                                                    className="px-6 py-4 hover:bg-slate-700/40 cursor-pointer transition-colors duration-150 group"
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex-1">
-                                                            <h3 className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
-                                                                {convo.name ||
-                                                                    convo.users
-                                                                        .map((u) => u.username)
-                                                                        .join(", ")}
-                                                                {/* 🔹 Add unread badge here */}
-                                                                {unread[convo.id] > 0 && (
-                                                                    <span className="ml-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                                                                        {unread[convo.id]}
-                                                                    </span>
-                                                                )}
-                                                            </h3>
-                                                            <p className="text-sm text-gray-400 mt-1">
-                                                                {unread[convo.id] > 0
-                                                                    ? `${unread[convo.id]} unread • ${convo._count?.messages || 0} total`
-                                                                    : `${convo._count?.messages || 0} messages`}
-                                                            </p>
-                                                        </div>
-                                                        {/* Avatars (max 3 stacked) */}
-                                                        <div className="flex -space-x-2 ml-4">
-                                                            {convo.users.length > 0 ? (
-                                                                convo.users
-                                                                    .filter(u => u.id !== user.id)
-                                                                    .slice(0, 3)
-                                                                    .map((u, index) => (
-                                                                        <motion.img
-                                                                            key={u.id}
-                                                                            src={
-                                                                                u.profilePicture ||
-                                                                                "https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg"
-                                                                            }
-                                                                            alt={u.username}
-                                                                            className="w-9 h-9 rounded-full border-2 border-slate-800 object-cover"
-                                                                            style={{ zIndex: convo.users.length - index }}
-                                                                            whileHover={{ scale: 1.1 }}
-                                                                            transition={{ duration: 0.2 }}
-                                                                        />
-                                                                    ))
-                                                            ) : (
-                                                                <img
-                                                                    src="https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg"
-                                                                    alt="default"
-                                                                    className="w-9 h-9 rounded-full object-cover"
-                                                                />
-                                                            )}
-                                                            {convo.users.length > 3 && (
-                                                                <div className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-700 text-xs font-semibold border-2 border-slate-800 text-gray-200">
-                                                                    +{convo.users.length - 3}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </motion.div>
-                                    ) : (
-                                        <div className="p-6 text-center text-gray-400">
-                                            {searchTerm ? "No conversations found" : "No conversations yet"}
-                                        </div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-
-                            <div className="border-t border-slate-700 px-6 py-3 bg-slate-800/50">
-                                <p className="text-xs text-gray-500">
-                                    {filteredConvos.length} of {conversations.length} conversations
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
+                    {/* Conversations List */}
+                    <ConversationsList
+                        conversations={conversations}
+                        filteredConversations={filteredConvos}
+                        loading={loading}
+                        searchTerm={searchTerm}
+                        currentUserId={user.id}
+                        unread={unread}
+                        onSearchChange={setSearchTerm}
+                        onNewConversation={() => setIsNewConvoOpen(true)}
+                        onConversationClick={goToChat}
+                    />
                 </div>
             </div>
 
@@ -384,7 +101,11 @@ export const Home = () => {
                             }}
                             className="w-16 h-16 rounded-full overflow-hidden border-2 hover:border-indigo-500 transition-colors duration-200"
                         >
-                            <img src={option.preview} alt={option.name} className="w-full h-full object-cover" />
+                            <img
+                                src={option.preview}
+                                alt={option.name}
+                                className="w-full h-full object-cover"
+                            />
                         </button>
                     ))}
                 </div>
@@ -416,11 +137,12 @@ export const Home = () => {
                 }
                 allUsers={allUsers}
             />
+
+            {/* Edit Profile Modal */}
             <EditProfileModal
                 isOpen={isEditProfileOpen}
                 onClose={() => setIsEditProfileOpen(false)}
             />
-
         </div>
     );
 };
