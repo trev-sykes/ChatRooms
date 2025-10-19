@@ -15,13 +15,13 @@ A modern, full-stack chat application built with **React**, **Vite**, **TypeScri
 ## Demo
 
 ### Typing Indicator
-<video src="videos/typing.mp4" controls width="400" />
+![Typing Indicator](videos/typing.mp4)
 
 ### Online Status
-<video src="videos/online-status.mp4" controls width="400" />
+![Online Status](videos/online-status.mp4)
 
 ### Notifications
-<video src="videos/notification.mp4" controls width="400" />
+![Notifications](videos/notification.mp4)
 
 ## Features
 
