@@ -88,7 +88,7 @@ export const Home = () => {
         }
     }, [user]);
     useEffect(() => {
-        if (user?.needsGoogleLink) setIsLinkGoogleOpen(true);
+        if (user && user?.needsGoogleLink) setIsLinkGoogleOpen(true);
         else setIsLinkGoogleOpen(false);
     }, [user]);
     const handleLinkGoogle = async (credentialResponse: any) => {
