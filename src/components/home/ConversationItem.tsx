@@ -30,6 +30,7 @@ export const ConversationItem = ({
                     <h3 className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
                         {conversation.name ||
                             conversation.users
+                                .filter(u => u.id !== currentUserId)
                                 .map((u) => u.username)
                                 .join(", ")}
                         {/* Unread Badge */}

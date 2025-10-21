@@ -7,6 +7,7 @@ interface CardProps {
     borderRadius?: string;
     boxShadow?: string;
     className?: string;
+    marginBottom?: string;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -15,6 +16,7 @@ export const Card: React.FC<CardProps> = ({
     borderRadius = "12px",
     boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)",
     className = "",
+    marginBottom = '6px'
 }) => {
     const mobileStyles = {
         padding: "0px",
@@ -28,6 +30,7 @@ export const Card: React.FC<CardProps> = ({
         borderRadius,
         boxShadow,
         backgroundColor: "#ffffff",
+        marginBottom
     };
 
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;

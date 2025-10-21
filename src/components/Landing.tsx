@@ -13,7 +13,7 @@ export const Landing: React.FC = () => {
     if (user) return <Navigate to="/home" replace />;
 
     return (
-        <PageWrapper centered>
+        <PageWrapper centered centeringOptions>
             <BackgroundOrbs variant="chat" />
             <Card className="max-w-2xl w-full bg-transparent">
                 <CardContent className="flex flex-col items-center text-center gap-4 p-4 sm:gap-6 sm:p-8">

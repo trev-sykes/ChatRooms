@@ -14,6 +14,7 @@ import { ServerStatusToast } from './components/toasts/ServerStatusToast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { IsOnlineToast } from './components/toasts/IsOnlineToast';
 import { ConversationProvider } from './context/ConversationContext';
+import Welcome from './components/Welcome';
 
 function App() {
   const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -33,6 +34,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <Home />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/welcome"
+                    element={
+                      <ProtectedRoute>
+                        <Welcome />
                       </ProtectedRoute>
                     }
                   />

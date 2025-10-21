@@ -66,7 +66,7 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <PageWrapper centered>
+        <PageWrapper centered centeringOptions>
             <BackgroundOrbs variant="login" />
 
             <motion.div

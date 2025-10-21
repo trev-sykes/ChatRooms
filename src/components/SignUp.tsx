@@ -15,7 +15,7 @@ import { useLoadingToast } from "../hooks/useLoadingToast";
 import { LoadingToast } from "./toasts/LoadingToast";
 
 export const SignUp: React.FC = () => {
-    const { login } = useUser();
+    const { login, loadingUser } = useUser();
     const navigate = useNavigate();
 
     // Hook for Google sign-in logic
@@ -23,7 +23,7 @@ export const SignUp: React.FC = () => {
         loading: googleLoading,
         error: googleError,
         handleGoogleAuth,
-    } = useGoogleAuth("/home");
+    } = useGoogleAuth("/welcome");
 
     // Local state
     const [username, setUsername] = useState("");
@@ -47,22 +47,34 @@ export const SignUp: React.FC = () => {
         e.preventDefault();
         setLoading(true);
         setStatus(null);
-        startLoadingToast()
+        startLoadingToast();
 
         try {
             await createUser(username, password, profilePicture);
             await login(username, password);
             setStatus("Account created successfully!");
-            navigate("/home");
+
+            // Wait until user is fully loaded in context before navigating
+            const waitForUser = () =>
+                new Promise<void>((resolve) => {
+                    const interval = setInterval(() => {
+                        if (!loadingUser) {
+                            clearInterval(interval);
+                            resolve();
+                        }
+                    }, 10);
+                });
+
+            await waitForUser();
+            navigate("/welcome", { state: { redirect: true } });
         } catch (err: any) {
             setStatus(err.message || "Something went wrong.");
         } finally {
             setLoading(false);
         }
     };
-
     return (
-        <PageWrapper centered>
+        <PageWrapper centered centeringOptions>
             <BackgroundOrbs variant="auth" />
 
             <motion.div

@@ -1,7 +1,7 @@
 // src/utils/avatars.ts
-export const getAvatarUrl = (customUrl?: string, style?: string) => {
+export const getAvatarUrl = (customUrl?: string, style?: string, username?: string) => {
     if (customUrl) return customUrl;
-
+    const seed = style === "initials" && username ? username : Math.random();
     switch (style) {
         case "adventurer":
             return `https://api.dicebear.com/6.x/adventurer/svg?seed=${Math.random()}`;
@@ -20,7 +20,7 @@ export const getAvatarUrl = (customUrl?: string, style?: string) => {
         case "identicon":
             return `https://api.dicebear.com/6.x/identicon/svg?seed=${Math.random()}`;
         case "initials":
-            return `https://api.dicebear.com/6.x/initials/svg?seed=${Math.random()}`;
+            return `https://api.dicebear.com/6.x/initials/svg?seed=${seed}`;
         case "micah":
             return `https://api.dicebear.com/6.x/micah/svg?seed=${Math.random()}`;
         case "miniavs":

@@ -27,6 +27,7 @@ interface UserContextProps {
     loginWithGoogle: (token: string, user: User) => void; // NEW: Direct login with token
     logout: () => void;
     updateAvatar: (customUrl?: string, style?: string) => Promise<void>;
+    loadingUser: boolean
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -34,28 +35,39 @@ const UserContext = createContext<UserContextProps | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
-
+    const [loadingUser, setLoadingUser] = useState<boolean>(!!token);
     useEffect(() => {
-        if (!token) return;
+        if (!token) {
+            setLoadingUser(false);
+            return;
+        }
 
         fetchCurrentUser(token)
             .then(user => setUser(user))
+            .finally(() => setLoadingUser(false))
             .catch(() => {
                 setUser(null);
                 setToken(null);
                 localStorage.removeItem("token");
             });
     }, [token]);
-
     /**
      * Regular username/password login
      */
     const login = async (username: string, password: string) => {
         const data = await loginUser(username, password);
-        setToken(data.token);
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
+
+        return new Promise<void>((resolve) => {
+            setToken(data.token);
+            localStorage.setItem("token", data.token);
+
+            setUser(data.user);
+
+            // Wait for the next tick so state is updated
+            setTimeout(() => resolve(), 0);
+        });
     };
+
 
     /**
      * NEW: Google OAuth login - directly sets token and user from backend response
@@ -87,7 +99,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser, token, setToken, login, loginWithGoogle, logout, updateAvatar }}>
+        <UserContext.Provider value={{ user, setUser, token, setToken, login, loginWithGoogle, logout, updateAvatar, loadingUser }}>
             {children}
         </UserContext.Provider>
     );

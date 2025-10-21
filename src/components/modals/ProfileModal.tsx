@@ -138,7 +138,7 @@ export const ProfileModal: React.FC = () => {
     };
 
     if (!selectedUser) return (
-        <PageWrapper centered>
+        <PageWrapper centered centeringOptions>
             <div className="text-gray-300 text-center mt-32 text-lg">
                 Loading profile...
             </div>
@@ -153,7 +153,7 @@ export const ProfileModal: React.FC = () => {
     const displayOnline = isOnline || derivedIsOnline;
 
     return (
-        <PageWrapper centered>
+        <PageWrapper centered centeringOptions>
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

@@ -16,6 +16,7 @@ import { NewConversationModal } from "./modals/NewConversationModal";
 import { EditProfileModal } from "./modals/EditProfileModal";
 import { getAvatarUrl } from "../utils/avatars";
 import { avatarOptions } from "../utils/avatarOptions";
+import { PageWrapper } from "./layout/PageWrapper";
 
 export const Home = () => {
     useHeartbeat();
@@ -56,9 +57,9 @@ export const Home = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+        <PageWrapper>
             <NotificationTitle appName={`ChatRooms - ${user.username}`} />
-
+            <div style={{ marginBottom: '16px' }} />
             <div className="max-w-6xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Profile Card */}
@@ -95,7 +96,7 @@ export const Home = () => {
                         <button
                             key={option.name}
                             onClick={() => {
-                                const randomAvatar = getAvatarUrl(undefined, option.name);
+                                const randomAvatar = getAvatarUrl(undefined, option.name, user.username);
                                 updateAvatar(randomAvatar, option.name);
                                 setIsModalOpen(false);
                             }}
@@ -143,6 +144,7 @@ export const Home = () => {
                 isOpen={isEditProfileOpen}
                 onClose={() => setIsEditProfileOpen(false)}
             />
-        </div>
+            <div style={{ marginBottom: '16px' }} />
+        </PageWrapper>
     );
 };
