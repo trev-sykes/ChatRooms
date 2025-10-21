@@ -236,7 +236,7 @@ export const Home = () => {
                     {passwordLoading ? "Saving..." : "Save Password"}
                 </Button>
             </Modal>
-            <Modal isOpen={isLinkGoogleOpen} onClose={() => setIsLinkGoogleOpen(false)} title="Link Google Account">
+            <Modal isOpen={user !== null && user.needsGoogleLink !== null && isLinkGoogleOpen} onClose={() => setIsLinkGoogleOpen(false)} title="Link Google Account">
                 <p className="mb-2 text-gray-300">
                     To enable Google login, please link your Google account.
                 </p>

@@ -68,7 +68,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setUser({
                 ...data.user,
                 handle: data.user.handle,
-                needsPassword: data.user.password == null
             });
 
             // Wait for the next tick so state is updated
@@ -81,9 +80,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
      * NEW: Google OAuth login - directly sets token and user from backend response
      */
     const loginWithGoogle = (authToken: string, userData: User) => {
+        setLoadingUser(true);  // start loading
         setToken(authToken);
         localStorage.setItem("token", authToken);
         setUser(userData);
+        setLoadingUser(false); // done loading
     };
 
     const logout = () => {

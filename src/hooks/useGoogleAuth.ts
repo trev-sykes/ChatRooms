@@ -34,31 +34,23 @@ export const useGoogleAuth = (redirectedRoute: string = "/home"): UseGoogleAuthR
                 }
             );
 
-            const { token, user, needsPassword } = res.data;
+            const { token, user } = res.data;
             if (!token) throw new Error("No token received from server");
 
             // Update context
             loginWithGoogle(token, user);
 
             // If backend says user needs to set a password, trigger modal
-            if (needsPassword) {
-                // You can either:
-                // 1. Open a modal via context/state
-                // 2. Or navigate to a /set-password page
-
-            } else {
-                // Wait until user context finishes loading
-                await new Promise<void>((resolve) => {
-                    const interval = setInterval(() => {
-                        if (!loadingUser) {
-                            clearInterval(interval);
-                            resolve();
-                        }
-                    }, 10);
-                });
-
-                navigate(redirectedRoute);
-            }
+            // Wait until user context finishes loading
+            await new Promise<void>((resolve) => {
+                const interval = setInterval(() => {
+                    if (!loadingUser) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 10);
+            });
+            navigate(redirectedRoute);
 
         } catch (err: any) {
             const msg =

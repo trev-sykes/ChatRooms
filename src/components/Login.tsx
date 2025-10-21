@@ -55,7 +55,7 @@ export const Login: React.FC = () => {
         startLoadingToast();
 
         try {
-            await login(username, password);
+            await login(username.trim(), password);
             navigate("/");
         } catch (err: any) {
             setError(err.message || "Login failed. Please try again.");
