@@ -9,84 +9,51 @@ import { Button } from "./ui/Button";
 import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import { createUser } from "../api/auth";
-import axios from "axios";
 import { Loader } from "./ui/Loader";
+import { useGoogleAuth } from "../hooks/useGoogleAuth";
+import { useLoadingToast } from "../hooks/useLoadingToast";
+import { LoadingToast } from "./toasts/LoadingToast";
 
 export const SignUp: React.FC = () => {
-    const apiUrl = import.meta.env.VITE_API_BASE_URL;
+    const { login } = useUser();
+    const navigate = useNavigate();
 
-    // Component state
+    // Hook for Google sign-in logic
+    const {
+        loading: googleLoading,
+        error: googleError,
+        handleGoogleAuth,
+    } = useGoogleAuth("/home");
+
+    // Local state
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [profilePicture, setProfilePicture] = useState("");
     const [status, setStatus] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-
-    const { login, loginWithGoogle } = useUser();
-    const navigate = useNavigate();
-
-    /**
-     * Handles Google Sign-In for account creation
-     */
-    const handleGoogleSuccess = async (credentialResponse: any) => {
-        setLoading(true);
-        setStatus(null);
-
-        try {
-            const { credential } = credentialResponse;
-
-            if (!credential) {
-                throw new Error("No credential received from Google");
-            }
-
-            // Send credential to backend for signup/login
-            const res = await axios.post(
-                `${apiUrl}/auth/google`,
-                { credential },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            const { token, user } = res.data;
-
-            if (!token) {
-                throw new Error("No token received from server");
-            }
-
-            // Log in with Google credentials
-            loginWithGoogle(token, user);
-
-            // Redirect to home
-            navigate("/home");
-        } catch (error: any) {
-            console.error("Google sign-up failed:", error);
-            const errorMessage = error.response?.data?.message
-                || error.response?.data?.error
-                || error.message
-                || "Google sign-up failed. Please try again.";
-
-            setStatus(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        isOpen: showLoadingToast,
+        start: startLoadingToast,
+        stop: stopLoadingToast,
+        message: loadingMessage,
+    } = useLoadingToast(6000);
+    const isLoading = loading || googleLoading;
+    const combinedStatus = status || googleError;
 
     /**
-     * Handles form submission to create a new user account.
+     * Handles normal form signup
      */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setStatus(null);
+        startLoadingToast()
 
         try {
             await createUser(username, password, profilePicture);
             await login(username, password);
             setStatus("Account created successfully!");
+            navigate("/home");
         } catch (err: any) {
             setStatus(err.message || "Something went wrong.");
         } finally {
@@ -112,32 +79,30 @@ export const SignUp: React.FC = () => {
                     </CardHeader>
 
                     <CardContent>
-                        {status && (
+                        {combinedStatus && (
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className={`mt-4 text-sm text-center ${status.toLowerCase().includes("error") ||
-                                    status.toLowerCase().includes("wrong") ||
-                                    status.toLowerCase().includes("failed")
+                                className={`mt-4 text-sm text-center ${combinedStatus.toLowerCase().includes("error") ||
+                                    combinedStatus.toLowerCase().includes("wrong") ||
+                                    combinedStatus.toLowerCase().includes("failed")
                                     ? "text-red-400"
                                     : "text-green-400"
                                     }`}
                             >
-                                {status}
+                                {combinedStatus}
                             </motion.p>
                         )}
 
-                        {/* Google Sign-up Button */}
-                        <div className="flex justify-center mb-4">
-                            {loading ? (
+                        {/* Google Sign-up */}
+                        <div className="relative flex justify-center mb-4">
+                            {isLoading ? (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                                    <div className="flex items-center gap-2">
-                                        <Loader />
-                                    </div>
+                                    <Loader />
                                 </div>
                             ) : (
                                 <GoogleLogin
-                                    onSuccess={handleGoogleSuccess}
+                                    onSuccess={handleGoogleAuth}
                                     onError={() => setStatus("Google sign-up failed.")}
                                     useOneTap={false}
                                     auto_select={false}
@@ -146,16 +111,16 @@ export const SignUp: React.FC = () => {
                         </div>
 
                         <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
-                            <span className="px-2">or</span>
+                            {isLoading && <span className="px-2">or</span>}
                         </div>
 
-                        {/* Traditional signup form */}
+                        {/* Regular signup form */}
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <TextInput
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Username"
-                                disabled={loading}
+                                disabled={isLoading}
                             />
 
                             <TextInput
@@ -163,20 +128,20 @@ export const SignUp: React.FC = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
                                 type="password"
-                                disabled={loading}
+                                disabled={isLoading}
                             />
 
                             <TextInput
                                 value={profilePicture}
                                 onChange={(e) => setProfilePicture(e.target.value)}
                                 placeholder="Profile Picture URL (optional)"
-                                disabled={loading}
+                                disabled={isLoading}
                             />
 
                             <Button
                                 type="submit"
                                 variant="cta"
-                                loading={loading}
+                                loading={isLoading}
                                 loadingText="Creating Account..."
                             >
                                 Sign Up
@@ -194,6 +159,13 @@ export const SignUp: React.FC = () => {
                     </CardFooter>
                 </Card>
             </motion.div>
+
+            <LoadingToast
+                isOpen={showLoadingToast}
+                onClose={stopLoadingToast}
+                title={loadingMessage.title}
+                message={loadingMessage.body}
+            />
         </PageWrapper>
     );
 };

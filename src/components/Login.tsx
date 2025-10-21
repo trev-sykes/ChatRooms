@@ -10,83 +10,45 @@ import { LoadingToast } from "./toasts/LoadingToast";
 import { Button } from "./ui/Button";
 import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
-import axios from "axios";
 import { Loader } from "./ui/Loader";
+import { useGoogleAuth } from "../hooks/useGoogleAuth";
 
 /**
  * Login page component for user authentication
  */
 export const Login: React.FC = () => {
-    const apiUrl = import.meta.env.VITE_API_BASE_URL;
-    const { isOpen: showLoadingToast, start: startLoadingToast, stop: stopLoadingToast, message: loadingMessage } = useLoadingToast(6000);
+    const { login } = useUser();
+    const navigate = useNavigate();
+
+    const {
+        loading: googleLoading,
+        error: googleError,
+        handleGoogleAuth,
+    } = useGoogleAuth("/home");
+
+    const {
+        isOpen: showLoadingToast,
+        start: startLoadingToast,
+        stop: stopLoadingToast,
+        message: loadingMessage,
+    } = useLoadingToast(6000);
 
     // Form state
-    const [username, setUsername] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
 
     // UI state
     const [error, setError] = useState<string | null>(null);
-    const [loginLoading, setLoginLoading] = useState<boolean>(false);
+    const [loginLoading, setLoginLoading] = useState(false);
 
-    // Authentication context
-    const { login, loginWithGoogle } = useUser();
-
-    // Navigation for redirecting on successful login
-    const navigate = useNavigate();
-
-    const handleGoogleSuccess = async (credentialResponse: any) => {
-        setLoginLoading(true);
-        setError(null);
-
-        try {
-            const { credential } = credentialResponse;
-
-            if (!credential) {
-                throw new Error("No credential received from Google");
-            }
-
-            // Send credential to backend
-            const res = await axios.post(
-                `${apiUrl}/auth/google`,
-                { credential },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            // Extract token and user from response
-            const { token, user } = res.data;
-
-            if (!token) {
-                throw new Error("No token received from server");
-            }
-
-            // Use the new loginWithGoogle function instead!
-            loginWithGoogle(token, user);
-
-            // Redirect after success
-            navigate("/home");
-        } catch (error: any) {
-            console.error("Google login failed:", error);
-            const errorMessage = error.response?.data?.message
-                || error.response?.data?.error
-                || error.message
-                || "Google login failed. Please try again.";
-
-            setError(errorMessage);
-        } finally {
-            setLoginLoading(false);
-            stopLoadingToast();
-        }
-    };
+    const isLoading = loginLoading || googleLoading;
+    const combinedError = error || googleError;
 
     /**
-     * Handles the login process when the user clicks the "Log In" button
+     * Handles normal username/password login
      */
-    const handleLogin = async () => {
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
         localStorage.removeItem("token");
         setError(null);
         setLoginLoading(true);
@@ -121,56 +83,54 @@ export const Login: React.FC = () => {
                     </CardHeader>
 
                     <CardContent>
-                        {error && (
+                        {combinedError && (
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 className="text-red-400 text-sm mb-4 text-center"
                             >
-                                {error}
+                                {combinedError}
                             </motion.p>
                         )}
 
-                        <div className="relative flex justify-center">
-                            {loginLoading ? (
+                        <div className="relative flex justify-center mb-4">
+                            {isLoading ? (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                                    <div className="flex items-center gap-2">
-                                        <Loader />
-                                    </div>
+                                    <Loader />
                                 </div>
                             ) : (
                                 <GoogleLogin
-                                    onSuccess={handleGoogleSuccess}
+                                    onSuccess={handleGoogleAuth}
                                     onError={() => setError("Google sign-in failed.")}
                                     useOneTap={false}
                                     auto_select={false}
                                 />
                             )}
-
                         </div>
+
                         <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
-                            {!loginLoading && <span className="px-2">or</span>}
+                            {!isLoading && <span className="px-2">or</span>}
                         </div>
 
-                        <form className="space-y-4">
+                        <form onSubmit={handleLogin} className="space-y-4">
                             <TextInput
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Username"
-                                disabled={loginLoading}
+                                disabled={isLoading}
                             />
                             <TextInput
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
                                 type="password"
-                                disabled={loginLoading}
+                                disabled={isLoading}
                             />
 
                             <Button
+                                type="submit"
                                 variant="login"
-                                onClick={handleLogin}
-                                loading={loginLoading}
+                                loading={isLoading}
                                 loadingText="Logging In..."
                             >
                                 Log In
@@ -180,7 +140,7 @@ export const Login: React.FC = () => {
 
                     <CardFooter>
                         <p className="w-full text-sm text-gray-300 text-center">
-                            Don't have an account?{" "}
+                            Don&apos;t have an account?{" "}
                             <Link to="/create" className="text-indigo-400 hover:underline">
                                 Sign up
                             </Link>
@@ -188,6 +148,7 @@ export const Login: React.FC = () => {
                     </CardFooter>
                 </Card>
             </motion.div>
+
             <LoadingToast
                 isOpen={showLoadingToast}
                 onClose={stopLoadingToast}
