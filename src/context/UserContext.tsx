@@ -9,10 +9,14 @@ import { getAvatarUrl } from "../utils/avatars";
 type User = {
     id: number;
     username: string;
+    handle: string;
     profilePicture: string;
     bio?: string;
     isDiscoverable: boolean;
     lastSeen: any;
+    createdAt: any;
+    needsPassword?: boolean;
+    needsGoogleLink?: boolean
 } | null;
 
 /**
@@ -61,7 +65,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setToken(data.token);
             localStorage.setItem("token", data.token);
 
-            setUser(data.user);
+            setUser({
+                ...data.user,
+                handle: data.user.handle,
+                needsPassword: data.user.password == null
+            });
 
             // Wait for the next tick so state is updated
             setTimeout(() => resolve(), 0);
@@ -88,7 +96,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (!user || !token) return;
 
         const avatarToUse = getAvatarUrl(customUrl, style);
-        setUser({ ...user, profilePicture: avatarToUse });
+        setUser({
+            ...user,
+            profilePicture: avatarToUse
+        });
 
         try {
             await updateUserAvatar(token, avatarToUse);

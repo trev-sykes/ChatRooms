@@ -9,6 +9,67 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+
+export const setPassword = async (req, res) => {
+    try {
+        const userId = req.user.userId; // You’ll need auth middleware
+        const { password } = req.body;
+
+        if (!password || password.length < 6)
+            return res.status(400).json({ error: "Password must be at least 6 characters" });
+
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Password set successfully",
+            user: { id: updatedUser.id, username: updatedUser.username },
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to set password" });
+    }
+};
+
+export const linkGoogle = async (req, res) => {
+    try {
+        const userId = req.user.userId; // via authMiddleware
+        const { credential } = req.body;
+        if (!credential) return res.status(400).json({ error: "Missing Google credential" });
+
+        // Verify token
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, sub: googleId } = payload;
+        if (!email) return res.status(400).json({ error: "Google account has no email" });
+
+        // Check if another user already linked this Google ID
+        const existingUser = await prisma.user.findUnique({ where: { googleId } });
+        if (existingUser) return res.status(400).json({ error: "This Google account is already linked to another user." });
+
+        // Update current user
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { googleId, email: email },
+        });
+
+        res.status(200).json({ success: true, user: updatedUser });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to link Google account" });
+    }
+};
+
+
 export const googleAuth = async (req, res) => {
     try {
         const { credential } = req.body;
@@ -34,6 +95,7 @@ export const googleAuth = async (req, res) => {
                 data: {
                     email,
                     username: name || email.split("@")[0],
+                    handle: name || email.split("@")[0],
                     googleId,
                     profilePicture: picture,
                 },
@@ -51,14 +113,17 @@ export const googleAuth = async (req, res) => {
         res.json({
             success: true,
             token,
+            needsPassword: user.password == null,
             user: {
                 id: user.id,
                 username: user.username,
+                handle: user.handle,
                 email: user.email,
                 profilePicture: user.profilePicture,
                 bio: user.bio,
                 isDiscoverable: user.isDiscoverable,
-                lastSeen: user.lastSeen
+                lastSeen: user.lastSeen,
+                createdAt: user.createdAt
             },
         });
     } catch (error) {
@@ -80,6 +145,7 @@ export const signup = async (req, res) => {
         const newUser = await prisma.user.create({
             data: {
                 username,
+                handle: username,
                 password: hashedPassword,
                 profilePicture: profilePicture || defaultProfilePicture,
             },
@@ -115,10 +181,14 @@ export const login = async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
+                handle: user.handle,
                 profilePicture: user.profilePicture,
                 bio: user.bio ?? "",
                 isDiscoverable: user.isDiscoverable ?? true,
-                lastSeen: user.lastSeen
+                lastSeen: user.lastSeen,
+                createdAt: user.createdAt,
+                needsPassword: !user.password,
+                needsGoogleLink: !user.googleId
             },
         });
 
@@ -138,10 +208,14 @@ export const me = async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
+                handle: user.handle,
                 profilePicture: user.profilePicture,
                 bio: user.bio ?? "",
                 isDiscoverable: user.isDiscoverable ?? true,
-                lastSeen: user.lastSeen
+                lastSeen: user.lastSeen,
+                createdAt: user.createdAt,
+                needsPassword: !user.password,
+                needsGoogleLink: !user.googleId
             },
         });
 

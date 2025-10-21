@@ -10,6 +10,7 @@ import { formatLastSeen } from "../../utils/formatLastSeen";
 interface User {
     id: number;
     username: string;
+    handle: string;
     profilePicture?: string;
     bio?: string;
     lastSeen?: string;
@@ -33,9 +34,6 @@ export const ProfileModal: React.FC = () => {
     const { userId } = useParams<{ userId: string }>();
     const numericUserId = Number(userId);
     const navigate = useNavigate();
-    const isOwnProfile = user?.id === selectedUser?.id;
-
-
     useEffect(() => {
         if (!token) return;
 
@@ -151,7 +149,7 @@ export const ProfileModal: React.FC = () => {
 
     // Use `isOnline || derivedIsOnline` to combine WS + lastSeen fallback
     const displayOnline = isOnline || derivedIsOnline;
-
+    console.log("SELECTED USER: ", selectedUser);
     return (
         <PageWrapper centered centeringOptions>
             <motion.div
@@ -183,21 +181,16 @@ export const ProfileModal: React.FC = () => {
                         {displayOnline ? "Online" : `Last seen: ${formatLastSeen(selectedUser.lastSeen)}`}
                     </p>
 
-
-
                     {/* Username */}
                     <h2 className="text-2xl font-bold text-white text-center">{selectedUser.username}</h2>
+
+                    {/* Handle */}
+                    {selectedUser.handle && selectedUser.handle !== selectedUser.username && (
+                        <p className="text-sm text-gray-400 text-center -mt-4">@{selectedUser.handle}</p>)}
 
                     {/* Bio */}
                     {selectedUser.bio ? (
                         <p className="text-gray-300 text-center mt-2 text-sm">{selectedUser.bio}</p>
-                    ) : isOwnProfile ? (
-                        <p
-                            className="text-indigo-400 text-center mt-2 text-sm cursor-pointer hover:text-indigo-300"
-                            onClick={() => alert("Open edit profile modal here")}
-                        >
-                            No bio yet — add one!
-                        </p>
                     ) : null}
 
 

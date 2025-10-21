@@ -10,6 +10,7 @@ export const getUser = async (req, res) => {
             select: {
                 id: true,
                 username: true,
+                handle: true,
                 profilePicture: true,
                 bio: true,
                 lastSeen: true,
@@ -43,6 +44,7 @@ export const getUsers = async (req, res) => {
             select: {
                 id: true,
                 username: true,
+                handle: true,
                 profilePicture: true,
                 bio: true,
                 lastSeen: true,
@@ -74,7 +76,7 @@ export const updateProfilePic = async (req, res) => {
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: { profilePicture },
-            select: { id: true, username: true, profilePicture: true },
+            select: { id: true, username: true, handle: true, profilePicture: true },
         });
 
         res.status(200).json({ success: true, user: updatedUser });
@@ -83,10 +85,9 @@ export const updateProfilePic = async (req, res) => {
         res.status(500).json({ error: "Error updating profile picture" });
     }
 };
-
 export const updateProfile = async (req, res) => {
-    const userId = req.user.userId; // get from auth middleware
-    const { bio, isDiscoverable } = req.body;
+    const userId = req.user.userId; // from auth middleware
+    const { bio, isDiscoverable, handle } = req.body; // add username
 
     try {
         const updatedUser = await prisma.user.update({
@@ -94,10 +95,11 @@ export const updateProfile = async (req, res) => {
             data: {
                 ...(bio !== undefined && { bio }),
                 ...(isDiscoverable !== undefined && { isDiscoverable }),
+                ...(handle !== undefined && { handle }),
             },
             select: {
                 id: true,
-                username: true,
+                handle: true,
                 bio: true,
                 isDiscoverable: true,
                 profilePicture: true,
@@ -110,6 +112,7 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ error: "Failed to update profile" });
     }
 };
+
 
 export const updateLastSeen = async (req, res) => {
     const userId = req.user.userId; // get from auth middleware

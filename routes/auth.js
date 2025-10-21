@@ -8,6 +8,8 @@ const router = new Router();
 router.post("/create", authController.signup);
 router.post("/login", authController.login);
 router.post("/google", authController.googleAuth);
+router.post("/link-google", authMiddleware, authController.linkGoogle);
+router.post("/set-password", authMiddleware, authController.setPassword);
 
 
 // Protected route

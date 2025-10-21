@@ -14,11 +14,13 @@ interface EditProfileModalProps {
 export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
     const { user, token, setUser } = useUser();
     const [bio, setBio] = useState(user?.bio || "");
+    const [handle, setHandle] = useState("");
     const [isDiscoverable, setIsDiscoverable] = useState(user?.isDiscoverable ?? true);
     const [loading, setLoading] = useState(false);
 
     // Sync local state whenever user changes
     useEffect(() => {
+        setHandle(user && user.handle && user.handle !== user.username ? user.handle : "");
         setBio(user?.bio || "");
         setIsDiscoverable(user?.isDiscoverable ?? true);
     }, [user]);
@@ -27,7 +29,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
         if (!user || !token) return;
         setLoading(true);
         try {
-            const updatedUser = await updateProfile(token, { bio, isDiscoverable });
+            const updatedUser = await updateProfile(token, { bio, isDiscoverable, handle });
             setUser(updatedUser);
             onClose();
         } catch (err) {
@@ -41,6 +43,14 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
             <div className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Handle</label>
+                    <TextInput
+                        value={handle}
+                        onChange={(e) => setHandle(e.target.value)}
+                        placeholder="Your handle"
+                    />
+                </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Bio</label>
                     <TextInput

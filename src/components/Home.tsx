@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useHomeWebSocket } from "../hooks/useHomeWebsocket";
@@ -17,12 +17,15 @@ import { EditProfileModal } from "./modals/EditProfileModal";
 import { getAvatarUrl } from "../utils/avatars";
 import { avatarOptions } from "../utils/avatarOptions";
 import { PageWrapper } from "./layout/PageWrapper";
+import { GoogleLogin } from "@react-oauth/google";
+import { fetchCurrentUser, linkGoogleApi } from "../api/auth";
+import { Loader } from "./ui/Loader";
 
 export const Home = () => {
     useHeartbeat();
-    const { user, token, logout, updateAvatar } = useUser();
+    const { setUser, user, token, logout, updateAvatar } = useUser();
     const navigate = useNavigate();
-
+    useEffect(() => { console.log(user) }, [user])
     // Load data and connect to WebSocket
     const { conversations, setConversations, allUsers, loading } = useHomeData();
     useHomeWebSocket(setConversations);
@@ -33,13 +36,83 @@ export const Home = () => {
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+
     const [isNewConvoOpen, setIsNewConvoOpen] = useState(false);
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState("");
 
+    const [isLinkGoogleOpen, setIsLinkGoogleOpen] = useState(false);
+    const [loadingLink, setLoadingLink] = useState(false);
+
+
     const { unread } = useConversations();
 
     const goToChat = (id: number) => navigate(`/conversation/${id}`);
+    const handleSetPassword = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            setPasswordError("Password must be at least 6 characters");
+            return;
+        }
+
+        try {
+            setPasswordLoading(true);
+            setPasswordError(null);
+
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/set-password`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ password: newPassword }),
+            });
+
+            // Optionally, fetch the user again to refresh state
+            setIsSetPasswordOpen(false);
+            setNewPassword("");
+        } catch (err: any) {
+            setPasswordError(err.message || "Failed to set password");
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+    useEffect(() => {
+        if (user?.needsPassword) {
+            setIsSetPasswordOpen(true);
+        } else {
+            setIsSetPasswordOpen(false);
+        }
+    }, [user]);
+    useEffect(() => {
+        if (user?.needsGoogleLink) setIsLinkGoogleOpen(true);
+        else setIsLinkGoogleOpen(false);
+    }, [user]);
+    const handleLinkGoogle = async (credentialResponse: any) => {
+        if (!token) return;
+        try {
+            setLoadingLink(true);
+            const { credential } = credentialResponse;
+            if (!credential) throw new Error("No credential from Google");
+
+            await linkGoogleApi(token, credential);
+
+            // Refresh user in context
+            const updatedUser = await fetchCurrentUser(token);
+            setUser(updatedUser);
+
+            setIsLinkGoogleOpen(false);
+        } catch (err: any) {
+            console.error(err);
+        } finally {
+            setLoadingLink(false);
+        }
+    };
+
+
 
     if (!user) {
         return (
@@ -103,7 +176,7 @@ export const Home = () => {
                             className="w-16 h-16 rounded-full overflow-hidden border-2 hover:border-indigo-500 transition-colors duration-200"
                         >
                             <img
-                                src={option.preview}
+                                src={option.preview || 'https://i.pravatar.cc/100?u=preview18'}
                                 alt={option.name}
                                 className="w-full h-full object-cover"
                             />
@@ -138,6 +211,44 @@ export const Home = () => {
                 }
                 allUsers={allUsers}
             />
+            <Modal
+                isOpen={isSetPasswordOpen}
+                onClose={() => setIsSetPasswordOpen(false)}
+                title="Set a Password"
+            >
+                <p className="mb-2 text-gray-300">
+                    To enable login with username/password, please set a password.
+                </p>
+                <TextInput
+                    type="password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mb-2"
+                />
+                {passwordError && <p className="text-red-400 text-sm mb-2">{passwordError}</p>}
+                <Button
+                    onClick={handleSetPassword}
+                    variant="primary"
+                    className="w-full"
+                    disabled={passwordLoading}
+                >
+                    {passwordLoading ? "Saving..." : "Save Password"}
+                </Button>
+            </Modal>
+            <Modal isOpen={isLinkGoogleOpen} onClose={() => setIsLinkGoogleOpen(false)} title="Link Google Account">
+                <p className="mb-2 text-gray-300">
+                    To enable Google login, please link your Google account.
+                </p>
+                {!loadingLink ? (
+                    <GoogleLogin
+                        onSuccess={handleLinkGoogle}
+                    />
+                ) : (
+                    <Loader />
+                )}
+
+            </Modal>
 
             {/* Edit Profile Modal */}
             <EditProfileModal

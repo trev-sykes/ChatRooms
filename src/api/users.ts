@@ -26,7 +26,7 @@ export const updateUserAvatar = async (
     return data;
 };
 
-export async function updateProfile(token: string, updates: { bio?: string; isDiscoverable?: boolean }) {
+export async function updateProfile(token: string, updates: { bio?: string; isDiscoverable?: boolean, handle?: string }) {
     const res = await fetch(`${BASE_URL}/users/profile`, {
         method: "PUT",
         headers: {
