@@ -9,8 +9,6 @@ import { SignUp } from './components/SignUp';
 import { ProfileModal } from './components/modals/ProfileModal';
 import { Conversation } from './components/Conversation';
 import { NavBar } from './components/ui/NavBar';
-import { useWakeServer } from './hooks/useWakeServer';
-import { ServerStatusToast } from './components/toasts/ServerStatusToast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { IsOnlineToast } from './components/toasts/IsOnlineToast';
 import { ConversationProvider } from './context/ConversationContext';
@@ -18,7 +16,6 @@ import Welcome from './components/Welcome';
 
 function App() {
   const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const isHealthy: null | boolean = useWakeServer();
   return (
     <GoogleOAuthProvider clientId={VITE_GOOGLE_CLIENT_ID}>
       <UserProvider>
@@ -74,7 +71,6 @@ function App() {
                 </Routes>
               </main>
               <IsOnlineToast />
-              <ServerStatusToast status={isHealthy} />
             </div>
           </Router>
         </ConversationProvider>

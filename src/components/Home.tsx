@@ -53,6 +53,7 @@ export const Home = () => {
 
     const goToChat = (id: number) => navigate(`/conversation/${id}`);
     const handleSetPassword = async () => {
+        if (!token) return; // <-- guard against null
         if (!newPassword || newPassword.length < 6) {
             setPasswordError("Password must be at least 6 characters");
             return;
@@ -72,6 +73,10 @@ export const Home = () => {
             });
 
             // Optionally, fetch the user again to refresh state
+            // ✅ Refetch user after password set
+            const updatedUser = await fetchCurrentUser(token);
+            setUser(updatedUser);
+
             setIsSetPasswordOpen(false);
             setNewPassword("");
         } catch (err: any) {
