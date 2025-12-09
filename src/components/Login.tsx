@@ -102,6 +102,12 @@ export const Login: React.FC = () => {
                                     onError={() => setError("Google sign-in failed.")}
                                     useOneTap={false}
                                     auto_select={false}
+                                    theme="outline" // or "outline", "filled_black"
+                                    size="large" // or "medium", "small"
+                                    text="signin_with" // or "signup_with", "continue_with", "signin"
+                                    shape="pill" // or "pill", "circle", "square"
+                                    logo_alignment="left" // or "center"
+                                    width="300" // specify width in pixels
                                 />
                             )}
                         </div>

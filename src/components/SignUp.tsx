@@ -116,12 +116,18 @@ export const SignUp: React.FC = () => {
                                     onError={() => setStatus("Google sign-up failed.")}
                                     useOneTap={false}
                                     auto_select={false}
+                                    theme="outline" // or "outline", "filled_black"
+                                    size="large" // or "medium", "small"
+                                    text="signup_with" // or "signup_with", "continue_with", "signin"
+                                    shape="pill" // or "pill", "circle", "square"
+                                    logo_alignment="left" // or "center"
+                                    width="300" // specify width in pixels
                                 />
                             )}
                         </div>
 
                         <div className="my-4 flex items-center justify-center text-text-muted text-sm">
-                            {isLoading && <span className="px-2">or</span>}
+                            {!isLoading && <span className="px-2">or</span>}
                         </div>
 
                         {/* Regular signup form */}
