@@ -23,7 +23,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     disabled
 }) => {
     return (
-        <div className="flex flex-col w-full mb-6 relative">
+        <div className="flex flex-col w-full  relative">
             <motion.input
                 type={type}
                 value={value}

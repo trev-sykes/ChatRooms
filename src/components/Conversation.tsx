@@ -307,8 +307,8 @@ export const Conversation: React.FC = () => {
                                             )}
                                             <div
                                                 className={`px-4 py-2 rounded-2xl max-w-[70%] sm:max-w-[60%] ${msg.sender?.id === user.id
-                                                    ? "bg-accent-green text-text self-end"
-                                                    : "bg-white/20 text-white"
+                                                    ? "bg-accent-green-dark text-text self-end"
+                                                    : "bg-white/20 text-text"
                                                     }`}
                                             >
                                                 {msg.sender?.id !== user.id && (
@@ -317,7 +317,7 @@ export const Conversation: React.FC = () => {
                                                     </strong>
                                                 )}
                                                 {msg.text}
-                                                <div className="text-xs text-text-muted mt-1">
+                                                <div className="text-xs text-text mt-1">
                                                     {new Date(msg.createdAt).toLocaleString()}
                                                 </div>
                                             </div>
@@ -333,7 +333,7 @@ export const Conversation: React.FC = () => {
                         </CardContent>
 
                         {/* Message input */}
-                        <CardFooter className="flex gap-3 flex-col sm:flex-row w-full mt-2">
+                        <CardFooter className="flex gap-3 flex-col justify-center items-center sm:flex-row w-full mt-2">
                             <TextInput
                                 value={newMessage}
                                 onChange={(e) => handleTyping(e.target.value)}

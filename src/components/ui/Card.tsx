@@ -11,7 +11,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         return (
             <div
                 ref={ref}
-                className={`w-full mx-auto rounded-xl max-sm:rounded-lg bg-slate-800/80 shadow-md max-sm:shadow-sm border border-slate-700 mb-5 ${className || ""}`}
+                className={`w-full mx-auto rounded-xl max-sm:rounded-lg bg-surface shadow-md max-sm:shadow-sm border border-border-dark mb-5 ${className || ""}`}
             >
                 {children}
             </div>
