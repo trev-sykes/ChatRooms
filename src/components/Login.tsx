@@ -8,7 +8,6 @@ import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/Card
 import { useLoadingToast } from "../hooks/useLoadingToast";
 import { LoadingToast } from "./toasts/LoadingToast";
 import { Button } from "./ui/Button";
-import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import { Loader } from "./ui/Loader";
 import { useGoogleAuth } from "../hooks/useGoogleAuth";
@@ -67,7 +66,6 @@ export const Login: React.FC = () => {
 
     return (
         <PageWrapper centered centeringOptions>
-            <BackgroundOrbs variant="login" />
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -77,7 +75,7 @@ export const Login: React.FC = () => {
             >
                 <Card className="backdrop-blur-xl">
                     <CardHeader>
-                        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-pink-500 to-yellow-400 bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold text-center text-text">
                             Welcome Back
                         </h1>
                     </CardHeader>
@@ -87,7 +85,7 @@ export const Login: React.FC = () => {
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="text-red-400 text-sm mb-4 text-center"
+                                className="text-accent-red text-sm mb-4 text-center"
                             >
                                 {combinedError}
                             </motion.p>
@@ -108,7 +106,7 @@ export const Login: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
+                        <div className="my-4 flex items-center justify-center text-text-muted text-sm">
                             {!isLoading && <span className="px-2">or</span>}
                         </div>
 
@@ -139,9 +137,9 @@ export const Login: React.FC = () => {
                     </CardContent>
 
                     <CardFooter>
-                        <p className="w-full text-sm text-gray-300 text-center">
+                        <p className="w-full text-sm text-text-muted text-center">
                             Don&apos;t have an account?{" "}
-                            <Link to="/create" className="text-indigo-400 hover:underline">
+                            <Link to="/create" className="text-accent-blue hover:underline">
                                 Sign up
                             </Link>
                         </p>

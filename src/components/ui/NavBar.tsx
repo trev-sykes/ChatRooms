@@ -71,7 +71,7 @@ export const NavBar: React.FC = () => {
                 <div className="flex justify-between items-center px-3 sm:px-6 h-12 sm:h-14">
                     <NavLink
                         to="/"
-                        className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
+                        className="text-base sm:text-lg font-extrabold "
                     >
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
@@ -82,7 +82,7 @@ export const NavBar: React.FC = () => {
                             <motion.img
                                 src="/favicon.png"  // just reference it as a URL
                                 alt="App Logo"
-                                className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl shadow-lg"
+                                className="w-16 h-16 sm:w-16 sm:h-16 rounded-xl shadow-lg"
                                 initial={{ rotate: -15, opacity: 0, scale: 0.8 }}
                                 animate={{ rotate: 0, opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.6, ease: "easeOut" }}
@@ -107,7 +107,7 @@ export const NavBar: React.FC = () => {
                                 onClick={item.onClick}
                                 className={({ isActive }) =>
                                     `px-2 py-1.5 rounded-lg text-sm font-medium transition ${isActive && !isConversationPage && item.to !== "#"
-                                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
+                                        ? "bg-accent-blue text-text shadow-md"
                                         : "text-gray-200 hover:bg-white/10 hover:text-white"
                                     }`
                                 }
@@ -161,7 +161,7 @@ export const NavBar: React.FC = () => {
                                 }}
                                 className={({ isActive }) =>
                                     `block px-2 py-1.5 rounded-lg text-sm font-medium transition ${isActive && !isConversationPage && item.to !== "#"
-                                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
+                                        ? "bg-accent-blue text-text shadow-md"
                                         : "text-gray-200 hover:bg-white/10 hover:text-white"
                                     }`
                                 }

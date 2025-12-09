@@ -117,7 +117,7 @@ export const Home = () => {
                 onClose={() => setIsSetPasswordOpen(false)}
                 title="Set a Password"
             >
-                <p className="mb-2 text-gray-300">
+                <p className="mb-2 text-text-muted">
                     To enable login with username/password, please set a password.
                 </p>
                 <TextInput
@@ -127,7 +127,7 @@ export const Home = () => {
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="mb-2"
                 />
-                {passwordError && <p className="text-red-400 text-sm mb-2">{passwordError}</p>}
+                {passwordError && <p className="text-accent-red text-sm mb-2">{passwordError}</p>}
                 <Button
                     onClick={handleSetPassword}
                     variant="primary"
@@ -138,7 +138,7 @@ export const Home = () => {
                 </Button>
             </Modal>
             <Modal isOpen={isLinkGoogleOpen} onClose={() => setIsLinkGoogleOpen(false)} title="Link Google Account">
-                <p className="mb-2 text-gray-300">
+                <p className="mb-2 text-text-muted">
                     To enable Google login, please link your Google account.
                 </p>
                 {!loadingLink ? (

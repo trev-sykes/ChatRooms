@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { LogOut } from "lucide-react";
+import { Button } from "../ui/Button";
 
 interface ProfileCardProps {
     user: {
@@ -22,12 +23,12 @@ export const ProfileCard = ({
 }: ProfileCardProps) => {
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-lg">
-                <h2 className="text-xl font-semibold text-white mb-6">Profile</h2>
+            <div className="bg-surface border border-border-dark rounded-2xl p-6 shadow-lg">
+                <h2 className="text-xl font-semibold text-text mb-6">Profile</h2>
 
                 <div className="flex flex-col items-center gap-6">
                     {/* Avatar */}
-                    <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <div className="w-32 h-32 rounded-full overflow-hidden bg-surface-dark flex items-center justify-center shadow-lg">
                         {user.profilePicture ? (
                             <img
                                 src={user.profilePicture}
@@ -38,7 +39,7 @@ export const ProfileCard = ({
                                 }}
                             />
                         ) : (
-                            <span className="text-3xl text-white font-bold">
+                            <span className="text-3xl text-text font-bold">
                                 {user.username[0].toUpperCase()}
                             </span>
                         )}
@@ -46,21 +47,21 @@ export const ProfileCard = ({
 
                     {/* User Info */}
                     <div className="text-center">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-text">
                             {user.username}
                         </h3>
                         {user.handle && user.handle !== user.username ? (
-                            <p className="text-sm text-gray-500 mt-1">@{user.handle}</p>
+                            <p className="text-sm text-text-muted mt-1">@{user.handle}</p>
                         ) : (
                             <button
                                 onClick={onEditProfile}
-                                className="text-indigo-400 text-sm font-semibold mt-1 hover:text-indigo-300 transition-colors"
+                                className="text-accent-blue text-sm font-semibold mt-1 hover:text-accent-blue-light transition-colors"
                             >
                                 Add a handle
                             </button>
                         )}
                         {user.createdAt && (
-                            <p className="text-sm text-gray-400 mt-1">
+                            <p className="text-sm text-text-muted mt-1">
                                 Member since{" "}
                                 {new Date(user.createdAt).toLocaleDateString(undefined, {
                                     year: "numeric",
@@ -72,11 +73,11 @@ export const ProfileCard = ({
                         {/* Bio Section */}
                         <div className="text-center mt-4">
                             {user.bio ? (
-                                <p className="text-gray-300 text-sm">{user.bio}</p>
+                                <p className="text-text-muted text-sm">{user.bio}</p>
                             ) : (
                                 <button
                                     onClick={onEditProfile}
-                                    className="text-indigo-400 text-sm font-semibold hover:text-indigo-300 transition-colors"
+                                    className="text-accent-blue text-sm font-semibold hover:text-accent-blue-light transition-colors"
                                 >
                                     Add a bio
                                 </button>
@@ -86,24 +87,25 @@ export const ProfileCard = ({
 
                     {/* Action Buttons */}
                     <div className="w-full flex flex-col gap-3">
-                        <button
+                        <Button
+                            variant="primary"
                             onClick={onUpdateAvatar}
-                            className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors duration-200"
                         >
                             Update Avatar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={onEditProfile}
-                            className="w-full px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold rounded-lg transition-colors duration-200"
+                            variant="secondary"
                         >
                             Edit Profile
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={onLogout}
-                            className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                            variant="destructive"
+                            className="w-full px-4 py-2 flex items-center justify-center gap-2"
                         >
                             <LogOut size={18} /> Logout
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

@@ -32,13 +32,13 @@ export const TextInput: React.FC<TextInputProps> = ({
                 placeholder={placeholder}
                 disabled={disabled}
                 className={`
-                    w-full px-4 py-3 rounded-xl text-base
-                    bg-white/10 text-white placeholder-gray-400
+                    w-full px-4 py-3 rounded-xl text-text
+                    bg-white/10 text-text placeholder-text-muted
                     backdrop-blur-md outline-none
                     transition-all duration-300
-                    border ${error ? "border-red-500" : "border-gray-500/30"}
-                    shadow ${error ? "shadow-red-400/40" : "shadow-gray-700/20"}
-                    focus:border-indigo-400 focus:shadow-indigo-300/30
+                    border ${error ? "border-accent-red" : "border-surface/30"}
+                    shadow ${error ? "shadow-accent-red/40" : "shadow-surface/20"}
+                    focus:border-accent-blue focus:shadow-accent-blue/30
                     ${className || ""}
                 `}
                 whileFocus={{ scale: 1.02 }}
@@ -49,7 +49,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="absolute -bottom-5 left-1 text-red-500 text-xs"
+                    className="absolute -bottom-5 left-1 text-accent-red text-xs"
                 >
                     {error}
                 </motion.span>

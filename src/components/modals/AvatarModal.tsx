@@ -28,7 +28,7 @@ export const AvatarModal: React.FC<AvatarModalProps> = ({ isModalOpen, onChange 
                             updateAvatar(randomAvatar, option.name);
                             onChange(false);
                         }}
-                        className="w-16 h-16 rounded-full overflow-hidden border-2 hover:border-indigo-500 transition-colors duration-200"
+                        className="w-16 h-16 rounded-full overflow-hidden border-2 hover:border-accent-blue transition-colors duration-200"
                     >
                         <img
                             src={option.preview || 'https://i.pravatar.cc/100?u=preview18'}

@@ -36,15 +36,15 @@ export const Button: React.FC<ButtonProps> = ({
 
     const variantStyles = {
         primary:
-            "bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/30",
+            "bg-accent-blue text-text hover:bg-accent-blue-light hover:shadow-lg hover:shadow-indigo-500/30",
         secondary:
-            "bg-gray-200 text-gray-900 hover:bg-gray-300 hover:shadow-md hover:shadow-gray-400/30",
+            "bg-transparent  border-2 border-accent-blue rounded text-text b-rounded bc-accent-blue hover:border-accent-blue-light",
         cta:
-            "w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-lg hover:opacity-90 transition-all",
+            "w-full mt-6 py-3 rounded-xl bg-accent-blue text-text font-semibold shadow-lg hover:opacity-90 transition-all",
         login:
-            "w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-lg hover:opacity-90 transition-all",
+            "w-full mt-6 py-3 rounded-xl bg-accent-green text-text font-semibold shadow-lg hover:opacity-90 transition-all",
         destructive:
-            "bg-red-600 text-white hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/30", // ✅ new variant
+            "bg-red-600 text-text hover:bg-accent-red hover:shadow-lg hover:shadow-red-500/30", // ✅ new variant
     };
 
 

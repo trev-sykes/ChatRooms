@@ -22,12 +22,12 @@ export const ConversationItem = ({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
             onClick={onClick}
-            className="px-6 py-4 hover:bg-slate-700/40 cursor-pointer transition-colors duration-150 group"
+            className="px-6 py-4 hover:bg-accent-blue/40 cursor-pointer transition-colors duration-150 group"
         >
             <div className="flex items-center justify-between">
                 {/* Conversation Info */}
                 <div className="flex-1">
-                    <h3 className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                    <h3 className="font-semibold text-text group-hover:text-accent-blue transition-colors">
                         {conversation.name ||
                             conversation.users
                                 .filter(u => u.id !== currentUserId)
@@ -35,12 +35,12 @@ export const ConversationItem = ({
                                 .join(", ")}
                         {/* Unread Badge */}
                         {unreadCount > 0 && (
-                            <span className="ml-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                            <span className="ml-2 bg-accent-green text-text text-xs font-semibold px-2 py-0.5 rounded-full">
                                 {unreadCount}
                             </span>
                         )}
                     </h3>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm text-text-muted mt-1">
                         {unreadCount > 0
                             ? `${unreadCount} unread • ${conversation._count?.messages || 0} total`
                             : `${conversation._count?.messages || 0} messages`}
@@ -61,7 +61,7 @@ export const ConversationItem = ({
                                         "https://i.pinimg.com/1200x/f4/97/b3/f497b38e143979c996349a4cc8f8fbb7.jpg"
                                     }
                                     alt={u.username}
-                                    className="w-9 h-9 rounded-full border-2 border-slate-800 object-cover"
+                                    className="w-9 h-9 rounded-full border-2 border-border-dark object-cover"
                                     style={{ zIndex: conversation.users.length - idx }}
                                     whileHover={{ scale: 1.1 }}
                                     transition={{ duration: 0.2 }}
@@ -75,7 +75,7 @@ export const ConversationItem = ({
                         />
                     )}
                     {conversation.users.length > 3 && (
-                        <div className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-700 text-xs font-semibold border-2 border-slate-800 text-gray-200">
+                        <div className="w-9 h-9 flex items-center justify-center rounded-full bg-accent-blue text-xs font-semibold border-2 border-border-dark text-text-muted">
                             +{conversation.users.length - 3}
                         </div>
                     )}

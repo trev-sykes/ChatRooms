@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
 import { Button } from "./ui/Button";
-import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { GoogleLogin } from "@react-oauth/google";
 import { createUser } from "../api/auth";
 import { Loader } from "./ui/Loader";
@@ -75,7 +74,6 @@ export const SignUp: React.FC = () => {
     };
     return (
         <PageWrapper centered centeringOptions>
-            <BackgroundOrbs variant="auth" />
 
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -85,7 +83,7 @@ export const SignUp: React.FC = () => {
             >
                 <Card className="backdrop-blur-xl">
                     <CardHeader>
-                        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold text-center text-text">
                             Create Your Account
                         </h1>
                     </CardHeader>
@@ -98,8 +96,8 @@ export const SignUp: React.FC = () => {
                                 className={`mt-4 text-sm text-center ${combinedStatus.toLowerCase().includes("error") ||
                                     combinedStatus.toLowerCase().includes("wrong") ||
                                     combinedStatus.toLowerCase().includes("failed")
-                                    ? "text-red-400"
-                                    : "text-green-400"
+                                    ? "text-accent-red"
+                                    : "text-accent-green"
                                     }`}
                             >
                                 {combinedStatus}
@@ -122,7 +120,7 @@ export const SignUp: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="my-4 flex items-center justify-center text-gray-400 text-sm">
+                        <div className="my-4 flex items-center justify-center text-text-muted text-sm">
                             {isLoading && <span className="px-2">or</span>}
                         </div>
 
@@ -162,9 +160,9 @@ export const SignUp: React.FC = () => {
                     </CardContent>
 
                     <CardFooter>
-                        <p className="w-full text-sm text-gray-300 text-center">
+                        <p className="w-full text-sm text-text-muted text-center">
                             Already have an account?{" "}
-                            <Link to="/login" className="text-indigo-400 hover:underline">
+                            <Link to="/login" className="text-accent-blue hover:underline">
                                 Log in
                             </Link>
                         </p>

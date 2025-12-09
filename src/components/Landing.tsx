@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Button } from "./ui/Button";
 import { PageWrapper } from "./layout/PageWrapper";
 import { Card, CardContent, CardFooter } from "./ui/Card";
-import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 
 export const Landing: React.FC = () => {
     const { user } = useUser();
@@ -14,8 +13,7 @@ export const Landing: React.FC = () => {
 
     return (
         <PageWrapper centered centeringOptions>
-            <BackgroundOrbs variant="chat" />
-            <Card className="max-w-2xl w-full bg-transparent">
+            <Card className="max-w-2xl w-full">
                 <CardContent className="flex flex-col items-center text-center gap-4 p-4 sm:gap-6 sm:p-8">
                     {/* Wrapper for Headline and Hero Illustration */}
                     <div className="flex flex-row items-center justify-center gap-4 w-full sm:flex-col sm:gap-0">
@@ -24,7 +22,7 @@ export const Landing: React.FC = () => {
                             initial={{ opacity: 0, y: -40 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="text-2xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
+                            className="text-2xl sm:text-6xl font-extrabold text-text"
                         >
                             Chat. Made Simple.
                         </motion.h1>
@@ -43,12 +41,12 @@ export const Landing: React.FC = () => {
                                 className="w-full h-full"
                             >
                                 {/* First bubble */}
-                                <rect x="10" y="20" width="60" height="40" rx="8" fill="#6366F1" />
-                                <rect x="20" y="30" width="40" height="6" rx="3" fill="#C7D2FE" />
-                                <rect x="20" y="42" width="30" height="6" rx="3" fill="#C7D2FE" />
+                                <rect x="10" y="20" width="60" height="40" rx="8" fill="#60a5fa" />
+                                <rect x="20" y="30" width="40" height="6" rx="3" fill="#f9fafb" />
+                                <rect x="20" y="42" width="30" height="6" rx="3" fill="#f9fafb" />
 
                                 {/* Second bubble */}
-                                <rect x="50" y="60" width="60" height="40" rx="8" fill="#10B981" />
+                                <rect x="50" y="60" width="60" height="40" rx="8" fill="#34d399" />
                                 <rect x="60" y="70" width="40" height="6" rx="3" fill="#D1FAE5" />
                                 <rect x="60" y="82" width="30" height="6" rx="3" fill="#D1FAE5" />
                             </svg>
@@ -60,10 +58,10 @@ export const Landing: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4, duration: 0.6 }}
-                        className="text-base sm:text-xl text-gray-300 leading-relaxed"
+                        className="text-text-muted sm:text-xl text-gray-300 leading-relaxed"
                     >
                         A modern messaging platform built with{" "}
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-text">
                             React, Node, and PostgreSQL
                         </span>
                         . Fast. Secure. Developer-first.
@@ -83,22 +81,22 @@ export const Landing: React.FC = () => {
                     </motion.div>
                 </CardContent>
 
-                <CardFooter className="text-center text-gray-300 flex flex-col sm:flex-row justify-center gap-2 text-sm sm:text-base">
-                    Built with ❤️ by{" "}
+                <CardFooter className="text-center text-text-muted flex flex-col sm:flex-row justify-center gap-2 text-sm sm:text-base">
+                    Open Source. {" "}
                     <a
                         href="https://x.com/freshly_mulched"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-500 underline transition-colors duration-200"
+                        className="text-accent-blue hover:text-accent-blue-light underline transition-colors duration-200"
                     >
-                        freshly_mulched
+                        Trevor Sykes
                     </a>
                     •{" "}
                     <a
                         href="https://github.com/trev-sykes/ChatRooms"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-green-400 hover:text-green-500 underline transition-colors duration-200"
+                        className="text-accent-green hover:text-accent-green-dark underline transition-colors duration-200"
                     >
                         Source Code
                     </a>

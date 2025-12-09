@@ -44,7 +44,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
         <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Handle</label>
+                    <label className="block text-sm font-medium text-text-muted mb-1">Handle</label>
                     <TextInput
                         value={handle}
                         onChange={(e) => setHandle(e.target.value)}
@@ -52,7 +52,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+                    <label className="block text-sm font-medium text-text-muted mb-1">Bio</label>
                     <TextInput
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
@@ -62,10 +62,10 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="block text-sm font-medium text-gray-300">
+                        <label className="block text-sm font-medium text-text-muted">
                             Public Profile
                         </label>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-text-muted">
                             {isDiscoverable
                                 ? "Visible in search and public listings."
                                 : "Hidden from search results."}

@@ -34,10 +34,10 @@ export const ConversationsList = ({
             animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-2"
         >
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
+            <div className="bg-surface border border-border-dark rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
                 {/* Header */}
-                <div className="border-b border-slate-700 px-6 py-4 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-white">Conversations</h2>
+                <div className="border border-border-dark px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-text">Conversations</h2>
                     <Button
                         variant="primary"
                         size="xs"
@@ -51,15 +51,15 @@ export const ConversationsList = ({
                 </div>
 
                 {/* Search */}
-                <div className="px-6 py-3 border-b border-slate-700 bg-slate-800/50">
+                <div className="px-6 py-3 border-b border-border-dark bg-surface-dark/50">
                     <div className="relative">
-                        <Search size={18} className="absolute left-3 top-3 text-gray-500" />
+                        <Search size={18} className="absolute left-3 top-3 text-text-muted" />
                         <input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                            className="w-full pl-10 pr-4 py-2 bg-surface-dark border border-border-dark rounded-lg text-text-muted placeholder-text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50 transition-all"
                         />
                     </div>
                 </div>
@@ -75,7 +75,7 @@ export const ConversationsList = ({
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="divide-y divide-slate-700"
+                                className="divide-y divide-surface-dark"
                             >
                                 {filteredConversations.map((convo, index) => (
                                     <ConversationItem
@@ -89,7 +89,7 @@ export const ConversationsList = ({
                                 ))}
                             </motion.div>
                         ) : (
-                            <div className="p-6 text-center text-gray-400">
+                            <div className="p-6 text-center text-text-muted">
                                 {searchTerm ? "No conversations found" : "No conversations yet"}
                             </div>
                         )}
@@ -97,7 +97,7 @@ export const ConversationsList = ({
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-slate-700 px-6 py-3 bg-slate-800/50">
+                <div className="border-t border-surface-dark px-6 py-3 bg-surface-dark/50">
                     <p className="text-xs text-gray-500">
                         {filteredConversations.length} of {conversations.length} conversations
                     </p>

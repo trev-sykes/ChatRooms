@@ -6,7 +6,6 @@ import { PageWrapper } from "./layout/PageWrapper";
 import { Button } from "./ui/Button";
 import { Card, CardContent, CardFooter } from "./ui/Card";
 import { TextInput } from "./ui/TextInput";
-import { BackgroundOrbs } from "./ui/BackgroundOrbs";
 import { AdminModal } from "./modals/AdminModal";
 import { AddUsersModal } from "./modals/AddUsersModal";
 import { LeaveConversationModal } from "./modals/LeaveConversationModal";
@@ -151,8 +150,6 @@ export const Conversation: React.FC = () => {
 
     return (
         <PageWrapper centered>
-            <BackgroundOrbs variant="chat" />
-
             {/* Modals */}
             {isAdmin && (
                 <AdminModal
@@ -198,14 +195,14 @@ export const Conversation: React.FC = () => {
                     transition={{ duration: 0.5 }}
                     className="relative flex items-center justify-between h-12"
                 >
-                    <h2 className="flex-1 text-2xl sm:text-3xl font-bold text-white text-center">
+                    <h2 className="flex-1 text-2xl sm:text-3xl font-bold text-text text-center">
                         {conversationName}
                     </h2>
                 </motion.div>
 
                 {/* Participants + Admin/Leave buttons */}
                 {participants.length > 0 && numericConversationId !== 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-border-dark">
                         {/* Participant images */}
                         <div className="flex gap-2 flex-wrap">
                             {participants
@@ -217,7 +214,7 @@ export const Conversation: React.FC = () => {
                                         alt={p.username}
                                         title={p.username}
                                         className={`w-10 h-10 rounded-full border-2 object-cover cursor-pointer
-                                            ${onlineUsers.has(p.id) ? "border-green-400" : "border-slate-800"}`}
+                                            ${onlineUsers.has(p.id) ? "border-accent-green" : "border-border-dark"}`}
                                         whileHover={{ scale: 1.1 }}
                                         initial={{ opacity: 0, y: 20, scale: 0.8 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -268,7 +265,7 @@ export const Conversation: React.FC = () => {
                                         {[0, 1, 2].map((i) => (
                                             <motion.span
                                                 key={i}
-                                                className="w-3 h-3 bg-white rounded-full"
+                                                className="w-3 h-3 bg-text rounded-full"
                                                 animate={{ y: [0, -8, 0] }}
                                                 transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.2 }}
                                             />
@@ -284,7 +281,7 @@ export const Conversation: React.FC = () => {
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="text-center text-gray-400 italic text-sm my-2"
+                                                className="text-center text-text-muted italic text-sm my-2"
                                             >
                                                 {msg.text}
                                             </motion.div>
@@ -310,7 +307,7 @@ export const Conversation: React.FC = () => {
                                             )}
                                             <div
                                                 className={`px-4 py-2 rounded-2xl max-w-[70%] sm:max-w-[60%] ${msg.sender?.id === user.id
-                                                    ? "bg-indigo-600 text-white self-end"
+                                                    ? "bg-accent-green text-text self-end"
                                                     : "bg-white/20 text-white"
                                                     }`}
                                             >
@@ -320,7 +317,7 @@ export const Conversation: React.FC = () => {
                                                     </strong>
                                                 )}
                                                 {msg.text}
-                                                <div className="text-xs text-gray-300 mt-1">
+                                                <div className="text-xs text-text-muted mt-1">
                                                     {new Date(msg.createdAt).toLocaleString()}
                                                 </div>
                                             </div>

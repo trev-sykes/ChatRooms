@@ -21,7 +21,7 @@ export const Switch = ({ checked = false, onCheckedChange }: SwitchProps) => {
 
     return (
         <div
-            className={`w-12 h-6 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${isOn ? "bg-indigo-500" : "bg-gray-500"
+            className={`w-12 h-6 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${isOn ? "bg-accent-purple" : "bg-gray-500"
                 }`}
             onClick={toggle}
         >
