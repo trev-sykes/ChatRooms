@@ -38,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
         primary:
             "bg-accent-blue text-text hover:bg-accent-blue-light hover:shadow-lg hover:shadow-indigo-500/30",
         secondary:
-            "bg-transparent  border-2 border-accent-blue rounded text-text b-rounded bc-accent-blue hover:border-accent-blue-light",
+            "bg-transparent  border-1 border-accent-blue rounded text-text b-rounded bc-accent-blue hover:border-accent-blue-light",
         cta:
             "w-full mt-6 py-3 rounded-xl bg-accent-blue text-text font-semibold shadow-lg hover:opacity-90 transition-all",
         login:
