@@ -64,6 +64,21 @@ export const conversationService = {
             data: { name: newName, updatedAt: new Date() },
         });
     },
+    async updateConversation(conversationId, name, isPublic, incrementViews = false) {
+        // Build the update object dynamically
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (isPublic !== undefined) updateData.isPublic = isPublic;
+        if (incrementViews) updateData.views = { increment: 1 }; // Prisma supports atomic increments
+        updateData.updatedAt = new Date(); // optional: always update timestamp
+
+        const updated = await prisma.conversation.update({
+            where: { id: conversationId },
+            data: updateData,
+        });
+
+        return updated;
+    },
     async findExistingOneOnOne(currentUserId, otherUserId) {
         const existingConvos = await prisma.conversation.findMany({
             where: { users: { some: { userId: currentUserId } } },
@@ -74,10 +89,11 @@ export const conversationService = {
             c.users.some(u => u.userId === otherUserId) && c._count.users === 2
         );
     },
-    async createConversation(name, creatorId, otherUserIds) {
+    async createConversation(name, creatorId, otherUserIds, isPublic = false) {
         return await prisma.conversation.create({
             data: {
                 ...(name ? { name } : {}),
+                isPublic,
                 users: {
                     create: [
                         { user: { connect: { id: creatorId } }, role: "OWNER" },
@@ -155,5 +171,33 @@ export const conversationService = {
         return users
             .filter(uc => uc.userId !== senderId)
             .map(uc => uc.userId);
+    },
+    async canUserPost(conversationId, userId) {
+        const conversation = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            select: { isPublic: true }
+        });
+
+        if (!conversation) return false;
+
+        if (conversation.isPublic) return true; // ✅ anyone can post
+        // Otherwise, check if user is part of conversation
+        const membership = await prisma.userConversation.findUnique({
+            where: {
+                userId_conversationId: { userId, conversationId }
+            }
+        });
+        return !!membership;
+    },
+    async getConversationById(conversationId) {
+        return await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: {
+                users: {
+                    include: { user: true },
+                },
+            },
+        });
     }
+
 };

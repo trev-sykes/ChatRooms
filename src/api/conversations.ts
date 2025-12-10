@@ -56,6 +56,18 @@ export const fetchConversations = async (token: string) => {
 
     return data.conversations; // returns array of Conversation objects
 };
+// api/conversations.ts
+
+export const fetchConversation = async (conversationId: number, token: string) => {
+    const res = await fetch(`${BASE_URL}/conversations/${conversationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch conversation");
+
+    return data.conversation; // includes `isPublic` flag
+};
 
 /**
  * Fetch the name of a conversation
@@ -262,4 +274,26 @@ export const markMessageAsRead = async (messageId: number, token: string) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to mark as read");
     return data.receipt;
+};
+/**
+ * Update a conversation (name and/or public/private) as admin/owner
+ * @param conversationId - ID of the conversation to update
+ * @param token - User auth token
+ * @param updates - Object containing optional fields to update: { name?, isPublic? }
+ * @returns Updated conversation object
+ */
+export const updateConversation = async (
+    conversationId: number,
+    token: string,
+    updates: { name?: string; isPublic?: boolean }
+) => {
+    const res = await axios.put(
+        `${BASE_URL}/conversations/${conversationId}`,
+        updates,
+        {
+            headers: { Authorization: `Bearer ${token}` },
+        }
+    );
+
+    return res.data; // returns updated conversation info
 };

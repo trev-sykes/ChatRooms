@@ -158,6 +158,7 @@ export const Conversation: React.FC = () => {
                     onClose={() => setIsAdminModalOpen(false)}
                     participants={participants}
                     currentUserId={user.id}
+                    isPublic={false}
                     isOwner={isOwner}
                     conversationId={numericConversationId}
                     conversationName={conversationName}

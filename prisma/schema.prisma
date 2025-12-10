@@ -44,10 +44,11 @@ model Conversation {
   updatedAt DateTime @default(now()) @updatedAt
 
   createdById Int?
-  createdBy   User? @relation("CreatedConversations", fields: [createdById], references: [id])
-
-  messages Message[]
-  users    UserConversation[]
+  createdBy   User?              @relation("CreatedConversations", fields: [createdById], references: [id])
+  isPublic    Boolean            @default(false)
+  views       Int                @default(0)
+  messages    Message[]
+  users       UserConversation[]
 
   @@index([createdAt])
 }

@@ -42,6 +42,8 @@ export const getMessagesByConversationId = async (req, res) => {
                 return res.status(403).json({ error: "Access denied: not a member of this conversation" });
             }
         }
+        // ✅ Increment conversation views
+        await conversationService.updateConversation(conversationId, undefined, undefined, true);
 
         const messages = await messageService.getMessagesForConversation(
             conversationId,
@@ -71,14 +73,22 @@ export const sendMessage = async (req, res) => {
             return res.status(404).json({ error: "Conversation not found" });
         }
 
-        const membership = await conversationService.getUserMembership(userId, convId);
+        // Check if user can post
+        const canPost = await conversationService.canUserPost(convId, userId);
 
-        if (!membership && convId !== 1) {
-            return res.status(403).json({ error: "You are not part of this conversation" });
+        if (!canPost) {
+            return res.status(403).json({ error: "You are not allowed to send messages in this conversation" });
+        }
+
+        // Auto-add user to public conversation if they aren't already a member
+        const membership = await conversationService.getUserMembership(userId, convId);
+        if (!membership && conversation.isPublic && convId !== 1) {
+            await conversationService.addMember(convId, userId);
         }
 
         // Get participant IDs
-        const participantIds = conversation.users?.map(u => u.userId);
+        const participantIds = (await conversationService.getConversationUsers(convId))
+            .map(u => u.userId);
 
         // Create message with receipts
         const message = await messageService.createMessageWithReceipts(
@@ -92,6 +102,7 @@ export const sendMessage = async (req, res) => {
         res.status(500).json({ error: "Error sending message" });
     }
 };
+
 
 export const markMessagesAsRead = async (req, res) => {
     const userId = req.user.userId;

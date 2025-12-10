@@ -47,7 +47,77 @@ export const getMessagesFromConversation = async (req, res) => {
         res.status(500).json({ error: "Error getting messages from conversation" });
     }
 }
-// update Conversation name
+export const updateConversation = async (req, res) => {
+    const { conversationid } = req.params; // get from URL
+    Number(conversationid)
+
+    const { name, isPublic } = req.body;
+    const userId = req.user.userId;
+
+    if (!Number(conversationid)) {
+        return res.status(400).json({ error: "conversationId is required" });
+    }
+
+    try {
+        // Only OWNER or ADMIN can update
+        const authorized = await conversationService.isUserAuthorized(
+            userId,
+            Number(conversationid),
+            ["OWNER", "ADMIN"]
+        );
+        if (!authorized) {
+            return res.status(403).json({ error: "You are not allowed to update this conversation" });
+        }
+
+        const updatedConversation = await conversationService.updateConversation(
+            Number(conversationid),
+            name,
+            isPublic
+        );
+
+        return res.json({
+            message: "Conversation updated successfully",
+            conversation: updatedConversation
+        });
+    } catch (error) {
+        console.error("❌ Error updating conversation:", error);
+        return res.status(500).json({ error: "Failed to update conversation" });
+    }
+};
+// controllers/conversationController.ts
+export const getConversationById = async (req, res) => {
+    const conversationId = Number(req.params.conversationId);
+    const userId = req.user?.userId; // safe access
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!conversationId) {
+        return res.status(400).json({ error: "conversationId is required" });
+    }
+
+    try {
+        const membership = await conversationService.getUserMembership(userId, conversationId);
+        const isMember = !!membership;
+
+        if (!isMember) {
+            return res.status(403).json({ error: "You are not part of this conversation" });
+        }
+
+        const conversation = await conversationService.getConversationById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: "Conversation not found" });
+        }
+
+        res.json({ conversation });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch conversation" });
+    }
+};
+
+
 
 // Update conversation name
 export const updateConversationName = async (req, res) => {
@@ -76,10 +146,36 @@ export const updateConversationName = async (req, res) => {
         res.status(500).json({ error: "Failed to update conversation name" });
     }
 };
+// POST /conversation/update
+export const updateConversationRoute = async (req, res) => {
+    const { conversationId, name, isPublic } = req.body;
+    const userId = req.user.userId;
+
+    try {
+        // Only OWNER or ADMIN
+        const authorized = await conversationService.isUserAuthorized(
+            userId,
+            conversationId,
+            ["OWNER", "ADMIN"]
+        );
+        if (!authorized) return res.status(403).json({ error: "Not allowed" });
+
+        const updated = await conversationService.updateConversation(
+            conversationId,
+            name,
+            isPublic
+        );
+
+        res.json({ message: "Conversation updated", conversation: updated });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update conversation" });
+    }
+};
 
 // Create a conversation
 export const createConversation = async (req, res) => {
-    const { name, userIds } = req.body;
+    const { name, userIds, isPublic } = req.body;
     const currentUserId = req.user.userId;
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -102,7 +198,8 @@ export const createConversation = async (req, res) => {
         const conversation = await conversationService.createConversation(
             name,
             currentUserId,
-            otherUserIds
+            otherUserIds,
+            isPublic
         );
 
         res.json({ conversation });

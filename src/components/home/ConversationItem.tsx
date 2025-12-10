@@ -35,7 +35,7 @@ export const ConversationItem = ({
                                 .join(", ")}
                         {/* Unread Badge */}
                         {unreadCount > 0 && (
-                            <span className="ml-2 bg-accent-green text-text text-xs font-semibold px-2 py-0.5 rounded-full">
+                            <span className="ml-2 bg-accent-green-dark text-text text-xs font-semibold px-2 py-0.5 rounded-full">
                                 {unreadCount}
                             </span>
                         )}

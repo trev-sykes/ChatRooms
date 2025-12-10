@@ -7,6 +7,7 @@ const conversationRoutes = new Router();
 
 // Get conversations
 conversationRoutes.get("/", authMiddleware, conversationController.getConversations);
+conversationRoutes.get("/:conversationId", authMiddleware, conversationController.getConversationById);
 
 // Get messages from a specific conversation
 conversationRoutes.get("/:id/messages", authMiddleware, conversationController.getMessagesFromConversation);
@@ -22,6 +23,8 @@ conversationRoutes.post("/add-member", authMiddleware, conversationController.ad
 
 // Update conversation name
 conversationRoutes.put("/update-name", authMiddleware, conversationController.updateConversationName);
+
+conversationRoutes.put("/:conversationid", authMiddleware, conversationController.updateConversation)
 
 // Remove member route
 conversationRoutes.post("/remove-member", authMiddleware, conversationController.removeMemberFromConversation);
