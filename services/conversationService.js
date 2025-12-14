@@ -198,6 +198,55 @@ export const conversationService = {
                 },
             },
         });
-    }
-
+    },
+    async getPublicConversations(
+        limit = 20,
+        cursor,
+    ) {
+        return prisma.conversation.findMany({
+            where: {
+                isPublic: true,
+            },
+            take: limit + 1,
+            ...(cursor && {
+                cursor: { id: cursor },
+                skip: 1,
+            }),
+            orderBy: {
+                createdAt: "desc",
+            },
+            select: {
+                id: true,
+                name: true,
+                createdAt: true,
+                views: true,
+                createdBy: {
+                    select: {
+                        id: true,
+                        username: true,
+                        profilePicture: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        messages: true,
+                        users: true,
+                    },
+                },
+                messages: {
+                    take: 1,
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        text: true,
+                        createdAt: true,
+                        sender: {
+                            select: {
+                                username: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    },
 };

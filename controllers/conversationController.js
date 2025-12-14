@@ -383,4 +383,28 @@ export const deleteConversation = async (req, res) => {
         res.status(500).json({ error: "Error deleting conversation" });
     }
 };
+// GET /conversations/public
+export const getPublicConversations = async (req, res) => {
+    try {
+        const limit = Number(req.query.limit) || 20;
+        const cursor = req.query.cursor ? Number(req.query.cursor) : undefined;
 
+        const conversations = await conversationService.getPublicConversations({
+            limit,
+            cursor,
+        });
+
+        const hasNextPage = conversations.length > limit;
+        if (hasNextPage) conversations.pop();
+
+        res.json({
+            conversations,
+            nextCursor: hasNextPage
+                ? conversations[conversations.length - 1]?.id
+                : null,
+        });
+    } catch (error) {
+        console.error("❌ Error fetching public conversations:", error);
+        res.status(500).json({ error: "Failed to fetch public conversations" });
+    }
+};
