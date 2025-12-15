@@ -46,7 +46,6 @@ export const useHomeWebSocket = (
                 wsRef.current = ws;
 
                 ws.onopen = () => {
-                    console.log("✅ WebSocket connected");
                     isConnectingRef.current = false;
 
                     ws.send(JSON.stringify({
@@ -86,14 +85,12 @@ export const useHomeWebSocket = (
                 };
 
                 ws.onclose = (event) => {
-                    console.log("🔴 WebSocket closed", event.code, event.reason);
                     wsRef.current = null;
                     isConnectingRef.current = false;
 
                     // Only auto-reconnect if it wasn't a clean closure and user is still logged in
                     if (token && user && event.code !== 1000) {
                         reconnectTimeoutRef.current = setTimeout(() => {
-                            console.log("🔄 Attempting to reconnect...");
                             connectWebSocket();
                         }, 3000);
                     }
@@ -114,7 +111,6 @@ export const useHomeWebSocket = (
 
         // Cleanup function
         return () => {
-            console.log("🧹 Cleaning up WebSocket");
 
             // Clear reconnect timeout
             if (reconnectTimeoutRef.current) {

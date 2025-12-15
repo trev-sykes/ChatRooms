@@ -27,7 +27,6 @@ export const useConversationWebSocket = ({
         wsRef.current = ws;
 
         ws.onopen = () => {
-            console.log("✅ Conversation WebSocket connected");
             ws.send(JSON.stringify({
                 type: "join_conversation",
                 userId: user.id,
@@ -88,7 +87,6 @@ export const useConversationWebSocket = ({
         };
 
         ws.onclose = () => {
-            console.log("🔴 Conversation WebSocket closed");
         };
 
         ws.onerror = (err) => {

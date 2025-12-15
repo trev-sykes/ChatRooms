@@ -85,7 +85,6 @@ export const ProfileModal: React.FC = () => {
             }
         };
 
-        ws.onclose = () => console.log("WebSocket disconnected");
         ws.onerror = (err) => console.error("WS error", err);
 
         return () => ws.close();
@@ -149,7 +148,6 @@ export const ProfileModal: React.FC = () => {
 
     // Use `isOnline || derivedIsOnline` to combine WS + lastSeen fallback
     const displayOnline = isOnline || derivedIsOnline;
-    console.log("SELECTED USER: ", selectedUser);
     return (
         <PageWrapper centered centeringOptions>
             <motion.div

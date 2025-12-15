@@ -15,19 +15,16 @@ export function useWakeServer() {
         }
 
         const apiUrl = import.meta.env.VITE_API_BASE_URL;
-        const isDev = import.meta.env.DEV;
-        console.log(`🟢 useWakeServer running in ${isDev ? "development" : "production"} mode`);
-        console.log(`🌐 Pinging API at: ${apiUrl}/health`);
+        // const isDev = import.meta.env.DEV;
 
         let retries = 3;
         let delay = 1000; // start at 1s
 
         const pingServer = () => {
             fetch(`${apiUrl}/health`)
-                .then(async (res) => {
+                .then(async () => {
                     try {
-                        const data = await res.json();
-                        console.log("Server health:", data);
+                        // const data = await res.json();
                         localStorage.setItem("lastHealthPing", Date.now().toString());
                         setStatus(true);
                     } catch {
@@ -39,7 +36,6 @@ export function useWakeServer() {
                     console.warn(`Health check failed: ${err.message}`);
                     retries -= 1;
                     if (retries > 0) {
-                        console.log(`Retrying in ${delay / 1000}s...`);
                         setTimeout(() => {
                             delay *= 2; // exponential backoff
                             pingServer();

@@ -53,11 +53,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         userId?: number;
         username?: string;
     } | null>(null);
-    console.log(isSavingPublic)
     // Initialize conversation state when modal opens
     useEffect(() => {
         if (isOpen && conversationId) {
-            console.log("Conversationid: ", conversationId)
+            isSavingPublic;
             setEditingName(conversationName || "");
             fetchConversation(conversationId, token)
                 .then(conv => setIsPublic(conv.isPublic))
