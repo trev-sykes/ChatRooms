@@ -16,7 +16,7 @@ export const NavBar: React.FC = () => {
     const navItems = user
         ? [
             { to: "/home", label: "Home" },
-            { to: "/conversations", label: "Conversations" },
+            { to: "/conversations", label: "Explore" },
             { to: "#", label: "Logout", onClick: logout },
         ]
         : [
