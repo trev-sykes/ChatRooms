@@ -6,7 +6,7 @@ const conversationRoutes = new Router();
 // Protected routes
 
 // Get conversations
-conversationRoutes.get("/", authMiddleware, conversationController.getConversations);
+conversationRoutes.get("/", conversationController.getConversations);
 conversationRoutes.get("/public", conversationController.getPublicConversations);
 conversationRoutes.get(
     "/public/:conversationId",
