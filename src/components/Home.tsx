@@ -69,7 +69,7 @@ export const Home = () => {
 
     return (
         <PageWrapper>
-            <NotificationTitle appName={`ChatRooms - ${user.username}`} />
+            <NotificationTitle appName={`${user.username}- Chatrooms`} />
             <div style={{ marginBottom: '16px' }} />
             <div className="max-w-6xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -13,6 +13,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { IsOnlineToast } from './components/toasts/IsOnlineToast';
 import { ConversationProvider } from './context/ConversationContext';
 import Welcome from './components/Welcome';
+import { PublicConversations } from './components/PublicCoversations';
 
 function App() {
   const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -59,6 +60,7 @@ function App() {
                     }
                   />
                   <Route path="/user/:userId" element={<ProfileModal />} />
+                  <Route path="/conversations" element={<PublicConversations />} />
                   <Route
                     path="/conversation/:conversationId"
                     element={

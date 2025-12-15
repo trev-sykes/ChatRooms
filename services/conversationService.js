@@ -180,15 +180,16 @@ export const conversationService = {
 
         if (!conversation) return false;
 
-        if (conversation.isPublic) return true; // ✅ anyone can post
-        // Otherwise, check if user is part of conversation
+        // 🔒 Posting ALWAYS requires membership
         const membership = await prisma.userConversation.findUnique({
             where: {
                 userId_conversationId: { userId, conversationId }
             }
         });
+
         return !!membership;
-    },
+    }
+    ,
     async getConversationById(conversationId) {
         return await prisma.conversation.findUnique({
             where: { id: conversationId },
@@ -199,22 +200,15 @@ export const conversationService = {
             },
         });
     },
-    async getPublicConversations(
-        limit = 20,
-        cursor,
-    ) {
+    async getPublicConversations({ limit = 20, cursor }) {
         return prisma.conversation.findMany({
-            where: {
-                isPublic: true,
-            },
+            where: { isPublic: true },
             take: limit + 1,
             ...(cursor && {
                 cursor: { id: cursor },
                 skip: 1,
             }),
-            orderBy: {
-                createdAt: "desc",
-            },
+            orderBy: { createdAt: "desc" },
             select: {
                 id: true,
                 name: true,
@@ -240,13 +234,12 @@ export const conversationService = {
                         text: true,
                         createdAt: true,
                         sender: {
-                            select: {
-                                username: true,
-                            },
+                            select: { username: true },
                         },
                     },
                 },
             },
         });
-    },
+    }
+
 };

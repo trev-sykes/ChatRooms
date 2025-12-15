@@ -7,8 +7,16 @@ const conversationRoutes = new Router();
 
 // Get conversations
 conversationRoutes.get("/", authMiddleware, conversationController.getConversations);
+conversationRoutes.get("/public", conversationController.getPublicConversations);
+conversationRoutes.get(
+    "/public/:conversationId",
+    conversationController.getPublicConversationById
+);
 conversationRoutes.get("/:conversationId", authMiddleware, conversationController.getConversationById);
-
+conversationRoutes.get(
+    "/public/:id/messages",
+    conversationController.getPublicMessages
+);
 // Get messages from a specific conversation
 conversationRoutes.get("/:id/messages", authMiddleware, conversationController.getMessagesFromConversation);
 

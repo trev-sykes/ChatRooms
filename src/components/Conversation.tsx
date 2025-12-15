@@ -13,6 +13,7 @@ import { useConversationWebSocket } from "../hooks/useConversationWebsocket";
 import { useConversationData } from "../hooks/useConversationData";
 import { useConversationActions } from "../hooks/useConversationActions";
 import type { ConversationUser } from "../types/conversationUser";
+import { NotificationTitle } from "./NotificationTitle";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -150,6 +151,7 @@ export const Conversation: React.FC = () => {
 
     return (
         <PageWrapper centered>
+            <NotificationTitle appName={`${conversationName ? conversationName : ''}- Chatrooms`} />
             {/* Modals */}
             {isAdmin && (
                 <AdminModal

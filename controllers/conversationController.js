@@ -408,3 +408,50 @@ export const getPublicConversations = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch public conversations" });
     }
 };
+export const getPublicConversationById = async (req, res) => {
+    const conversationId = Number(req.params.conversationId);
+
+    if (!conversationId) {
+        return res.status(400).json({ error: "Invalid conversation id" });
+    }
+
+    try {
+        const conversation = await conversationService.getConversationById(conversationId);
+
+        if (!conversation || !conversation.isPublic) {
+            return res.status(404).json({ error: "Conversation not found" });
+        }
+
+        // 🔥 increment views safely
+        await conversationService.updateConversation(conversationId, undefined, undefined, true);
+
+        res.json({ conversation });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch public conversation" });
+    }
+};
+export const getPublicMessages = async (req, res) => {
+    const conversationId = Number(req.params.id);
+
+    if (!conversationId) {
+        return res.status(400).json({ error: "Invalid conversation id" });
+    }
+
+    try {
+        const conversation = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            select: { isPublic: true },
+        });
+
+        if (!conversation || !conversation.isPublic) {
+            return res.status(403).json({ error: "Not a public conversation" });
+        }
+
+        const messages = await messageService.getMessagesForConversation(conversationId);
+        res.json({ messages });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch messages" });
+    }
+};
