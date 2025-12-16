@@ -4,12 +4,14 @@ import authMiddleware from "./middleware/authMiddleware.js";
 
 const messageRoutes = Router();
 
-// Protected routes
 
+// Get Public Messages
+messageRoutes.get("/messages/public/:conversationId", messageController.getPublicMessages);
 // Get Global messages
 messageRoutes.get("/messages", authMiddleware, messageController.getGlobalMessages);
 // Get Messages by conversationId
 messageRoutes.get("/messages/:conversationId", authMiddleware, messageController.getMessagesByConversationId);
+
 // Send a message
 messageRoutes.post("/messages", authMiddleware, messageController.sendMessage);
 

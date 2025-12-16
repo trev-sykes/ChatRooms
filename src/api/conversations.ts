@@ -22,6 +22,17 @@ export const fetchMessages = async (conversationId: number, token: string) => {
         readAt: msg.receipts?.[0]?.readAt || null,
     }));
 };
+// Grabs all messages from public conversation
+export const fetchPublicMessages = async (conversationId: number) => {
+    const res = await fetch(`${BASE_URL}/messages/public/${conversationId}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch messages");
+    return data.messages.map((msg: any) => ({
+        ...msg,
+        isRead: msg.receipts?.[0]?.isRead || false,
+        readAt: msg.receipts?.[0]?.readAt || null,
+    }));
+}
 /**
  * Update the name of a conversation (admin/owner only)
  */

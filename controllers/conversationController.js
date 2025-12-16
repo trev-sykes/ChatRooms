@@ -257,6 +257,33 @@ export const addMemberToConversation = async (req, res) => {
         res.status(500).json({ error: "Error adding member to conversation" });
     }
 };
+/**
+ * Auto-add user to a public conversation if not already a member
+ * and create a system message announcing their join.
+ */
+export const autoJoinPublicConversation = async (conversationId, userId) => {
+    // 1️⃣ Check if conversation exists and is public
+    const conversation = await conversationService.getConversationById(conversationId);
+    if (!conversation) throw new Error("Conversation not found");
+    if (!conversation.isPublic) return; // only auto-join for public
+
+    // 2️⃣ Check if user is already a member
+    const membership = await conversationService.getUserMembership(userId, conversationId);
+    if (membership) return; // already a member
+
+    // 3️⃣ Add user as MEMBER
+    const newMember = await conversationService.addMember(conversationId, userId);
+
+    // 4️⃣ Create system message announcing the join
+    await messageService.createSystemMessage(
+        conversationId,
+        `${newMember.user.username} joined the conversation.`,
+        SYSTEM_ID
+    );
+
+    return newMember;
+};
+
 
 export const removeMemberFromConversation = async (req, res) => {
     const { conversationId, userIdToRemove } = req.body;

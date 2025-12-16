@@ -1,4 +1,5 @@
 import { conversationService } from "../services/conversationService.js";
+import { autoJoinPublicConversation } from "./conversationController.js";
 import { messageService } from "../services/messageService.js";
 
 /**
@@ -19,6 +20,23 @@ export const getGlobalMessages = async (req, res) => {
         res.status(500).json({ error: "Error getting messages" });
     }
 };
+// Get public conversations, no token required
+export const getPublicMessages = async (req, res) => {
+    const conversationId = Number(req.params.conversationId);
+    try {
+        if (isNaN(conversationId)) {
+            return res.status(400).json({ error: "Invalid conversation ID" });
+        }
+        const messages = await messageService.getMessagesForPublicConversation(
+            conversationId
+        )
+        res.json({ messages });
+
+    } catch (error) {
+        console.error("❌ Error fetching public messages:", error);
+        res.status(500).json({ error: "Error getting messages" });
+    }
+}
 
 /**
  * Fetch messages by conversation ID
@@ -67,42 +85,23 @@ export const sendMessage = async (req, res) => {
     try {
         const convId = conversationId ? Number(conversationId) : 1;
 
-        const conversation = await conversationService.getConversationWithUsers(convId);
+        console.log("📩 Sending message:", { userId, convId, text });
 
-        if (!conversation) {
-            return res.status(404).json({ error: "Conversation not found" });
-        }
+        // Send message with auto-join logic
+        const message = await messageService.sendMessageWithAutoJoin({
+            conversationId: convId,
+            senderId: userId,
+            text
+        });
 
-        // Check if user can post
-        const canPost = await conversationService.canUserPost(convId, userId);
-
-        if (!canPost) {
-            return res.status(403).json({ error: "You are not allowed to send messages in this conversation" });
-        }
-
-        // Auto-add user to public conversation if they aren't already a member
-        const membership = await conversationService.getUserMembership(userId, convId);
-        if (!membership && conversation.isPublic && convId !== 1) {
-            await conversationService.addMember(convId, userId);
-        }
-
-        // Get participant IDs
-        const participantIds = (await conversationService.getConversationUsers(convId))
-            .map(u => u.userId);
-
-        // Create message with receipts
-        const message = await messageService.createMessageWithReceipts(
-            { text, senderId: userId, conversationId: convId },
-            participantIds
-        );
+        console.log("✅ Message created:", message);
 
         res.json({ message });
     } catch (error) {
         console.error("❌ Error sending message:", error);
-        res.status(500).json({ error: "Error sending message" });
+        res.status(500).json({ error: "Error sending message", details: error.message });
     }
 };
-
 
 export const markMessagesAsRead = async (req, res) => {
     const userId = req.user.userId;
