@@ -3,7 +3,7 @@ import { Modal } from "../ui/Modal";
 import { TextInput } from "../ui/TextInput";
 import { Button } from "../ui/Button";
 import { AnimatePresence } from "framer-motion";
-import { createConversation } from "../../api/conversations";
+import { createConversation, createPublicConversation } from "../../api/conversations";
 import { Loader } from "../ui/Loader";
 import { UserSearchList } from "../ui/UserSearchList";
 
@@ -25,6 +25,7 @@ export const NewConversationModal: React.FC<Props> = ({
     const [name, setName] = useState("");
     const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isPublic, setIsPublic] = useState(false); // <-- new state
 
     const toggleUserSelection = (id: number) => {
         setSelectedUserIds(prev =>
@@ -33,16 +34,26 @@ export const NewConversationModal: React.FC<Props> = ({
     };
 
     const handleCreate = async () => {
-        if (selectedUserIds.length === 0)
-            return alert("Select at least one member");
+        if (!isPublic && selectedUserIds.length === 0) {
+            return alert("Select at least one member for a private conversation");
+        }
 
         setLoading(true);
         try {
-            const conversation = await createConversation(token, selectedUserIds, name);
+            let conversation;
+            if (isPublic) {
+                // Call public conversation API
+                conversation = await createPublicConversation(token, name, selectedUserIds);
+            } else {
+                // Call private conversation API
+                conversation = await createConversation(token, selectedUserIds, name);
+            }
+
             onCreated(conversation);
             onClose();
             setName("");
             setSelectedUserIds([]);
+            setIsPublic(false);
         } catch (err: any) {
             alert(err.response?.data?.error || err.message || "Failed to create conversation");
         } finally {
@@ -61,12 +72,24 @@ export const NewConversationModal: React.FC<Props> = ({
                             placeholder="Conversation Name (optional)"
                         />
 
-                        {/* 🧩 Reusable User Search List */}
-                        <UserSearchList
-                            allUsers={allUsers}
-                            selectedUserIds={selectedUserIds}
-                            onToggleUser={toggleUserSelection}
-                        />
+                        {/* Public checkbox */}
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={e => setIsPublic(e.target.checked)}
+                            />
+                            Public Conversation
+                        </label>
+
+                        {/* Show user list only if private */}
+                        {!isPublic && (
+                            <UserSearchList
+                                allUsers={allUsers}
+                                selectedUserIds={selectedUserIds}
+                                onToggleUser={toggleUserSelection}
+                            />
+                        )}
 
                         <Button
                             onClick={handleCreate}

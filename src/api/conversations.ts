@@ -171,7 +171,21 @@ export const createConversation = async (
 
     return res.data.conversation;
 };
+export const createPublicConversation = async (
+    token: string,
+    name: string,
+    userIds: number[] = [] // default to empty array
+) => {
+    const res = await axios.post(
+        `${BASE_URL}/conversations/public`,
+        { name, userIds },
+        {
+            headers: { Authorization: `Bearer ${token}` },
+        }
+    );
 
+    return res.data.conversation;
+};
 // Invite a member to an existing conversation (requires admin/owner)
 export const addMemberToConversation = async (
     token: string,

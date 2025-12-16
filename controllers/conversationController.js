@@ -172,6 +172,33 @@ export const updateConversationRoute = async (req, res) => {
         res.status(500).json({ error: "Failed to update conversation" });
     }
 };
+export const createPublicConversation = async (req, res) => {
+    const { name, userIds } = req.body;
+    const currentUserId = req.user.userId;
+
+    if (!name) {
+        return res.status(400).json({ error: "Must include a name" });
+    }
+    if (!Array.isArray(userIds)) {
+        return res.status(400).json({ error: "Invalid userIds, must be an array" });
+    }
+
+    try {
+        const otherUserIds = userIds.filter(id => id !== currentUserId);
+
+        const conversation = await conversationService.createConversation(
+            name,
+            currentUserId,
+            otherUserIds,
+            true // public
+        );
+
+        res.json({ conversation });
+    } catch (error) {
+        console.error("Create public conversation error:", error);
+        res.status(500).json({ error: "Error creating public conversation" });
+    }
+}
 
 // Create a conversation
 export const createConversation = async (req, res) => {

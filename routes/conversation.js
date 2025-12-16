@@ -25,6 +25,7 @@ conversationRoutes.get("/:id/users", authMiddleware, conversationController.getC
 
 // Create a conversation
 conversationRoutes.post("/", authMiddleware, conversationController.createConversation);
+conversationRoutes.post("/public", authMiddleware, conversationController.createPublicConversation);
 
 //  Add member route
 conversationRoutes.post("/add-member", authMiddleware, conversationController.addMemberToConversation);
