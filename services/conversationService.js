@@ -1,13 +1,13 @@
 import { prisma } from "../prisma/prisma.js";
 
 export const conversationService = {
-
-    async getConversationsForUser(userId) {
-        return await prisma.conversation.findMany({
+    async getUserConversationList(userId) {
+        // Fetch conversations user belongs to, plus global chat
+        const conversations = await prisma.conversation.findMany({
             where: {
                 OR: [
                     { users: { some: { userId } } },
-                    { id: 1 }, // include the global chat
+                    { id: 1 }, // include global chat
                 ],
             },
             include: {
@@ -23,8 +23,25 @@ export const conversationService = {
             },
             orderBy: { createdAt: "desc" },
         });
-    },
 
+        // Compute unread counts and format
+        const formatted = await Promise.all(
+            conversations.map(async (conversation) => {
+                const unreadCount = await prisma.messageReceipt.count({
+                    where: {
+                        userId,
+                        isRead: false,
+                        message: { conversationId: conversation.id },
+                    },
+                });
+
+                // Reuse your existing formatting helper
+                return this.formatConversationWithUnread(conversation, unreadCount);
+            })
+        );
+
+        return formatted;
+    },
     async getUnreadCount(userId, conversationId) {
         return await prisma.messageReceipt.count({
             where: {

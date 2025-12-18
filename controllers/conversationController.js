@@ -2,23 +2,20 @@ import { SYSTEM_ID } from "../systemId.js";
 import { conversationService } from "../services/conversationService.js";
 import { messageService } from "../services/messageService.js";
 
-// Get all conversation for user
+// Get all conversations for a user
 export const getConversations = async (req, res) => {
     const userId = req.user.userId;
+
     try {
-        // Fetch all conversations the user is part of, plus the global chat
-        const conversations = await conversationService.getConversationsForUser(userId);
-        // Compute unread count for each conversation
-        const formatted = await Promise.all(conversations.map(async (conversation) => {
-            const unreadCount = await conversationService.getUnreadCount(userId, conversation.id);
-            return conversationService.formatConversationWithUnread(conversation, unreadCount);
-        }));
-        res.json({ conversations: formatted });
+        // Fetch all conversations (already formatted and includes unread counts)
+        const conversations = await conversationService.getUserConversationList(userId);
+        res.json({ conversations });
     } catch (error) {
         console.error("❌ Error getting conversations:", error);
         res.status(500).json({ error: "Error getting conversations" });
     }
 };
+
 
 // controllers/conversationController.ts
 export const getConversationUsers = async (req, res) => {
