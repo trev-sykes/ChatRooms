@@ -1,107 +1,93 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { usePublicConversations } from "../hooks/usePublicConversations";
 import { Loader } from "./ui/Loader";
 import { motion } from "framer-motion";
-
-// const StatsCard = ({ label, value, icon }: { label: string; value: number; icon: string }) => (
-//     <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4">
-//         <div className="flex items-center gap-3">
-//             <span className="text-2xl">{icon}</span>
-//             <div>
-//                 <p className="text-2xl font-bold text-[var(--color-text)]">{value}</p>
-//                 <p className="text-sm text-[var(--color-text-muted)]">{label}</p>
-//             </div>
-//         </div>
-//     </div>
-// );
+import { Button } from "./ui/Button";
+import { NewConversationModal } from "./modals/NewConversationModal";
 
 export const PublicConversationList = () => {
-    const { user } = useUser();
+    const { user, token } = useUser();
     const navigate = useNavigate();
     const { conversations, loadMore, hasMore, loading, error } = usePublicConversations();
+    const [isNewPublicOpen, setIsNewPublicOpen] = useState(false);
 
     const goToConversation = (id: number) => navigate(`/conversation/${id}`);
 
-    // Calculate stats
-    const filteredConversations = conversations.filter((conv) => conv.id !== 1);
-    // const totalConversations = filteredConversations.length;
-    // const totalMembers = conversations.reduce((sum, conv) => sum + (conv._count?.users ?? 0), 0);
-    // const totalMessages = conversations.reduce((sum, conv) => sum + (conv._count?.messages ?? 0), 0);
+    const handleCreatedConversation = (conversation: any) => {
+        goToConversation(conversation.id);
+    };
 
     if (!user) {
         return (
-            <div className="min-h-[40vh] flex items-center justify-center text-[var(--color-text-muted)] text-lg">
+            <div className="min-h-[40vh] flex items-center justify-center text-[var(--color-text-muted)] text-lg px-4">
                 Log in to view public conversations.
             </div>
         );
     }
 
-    if (loading && conversations.length === 0) {
-        return <Loader />;
-    }
+    if (loading && conversations.length === 0) return <Loader />;
 
     if (error) {
         return (
-            <div className="min-h-[40vh] flex items-center justify-center">
+            <div className="min-h-[40vh] flex items-center justify-center px-4">
                 <p className="text-[var(--color-accent-red)]">{error}</p>
             </div>
         );
     }
 
+    const filteredConversations = conversations.filter(conv => conv.id !== 1);
+
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="max-w-6xl mx-auto">
-                {/* Header Section */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-text mb-2">
-                        Public Conversations
-                    </h1>
-                    <p className="text-text-muted">
-                        Discover and join conversations from the community
-                    </p>
-                </div>
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header with New Public Conversation Button */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div className="flex-1">
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                    {/* <StatsCard label="Conversations" value={totalConversations} icon="💬" />
-                <StatsCard label="Total Members" value={totalMembers} icon="👥" />
-                <StatsCard label="Messages" value={totalMessages} icon="📨" /> */}
+                        <p className="text-text-muted text-sm sm:text-base">
+                            Discover and join conversations from the community
+                        </p>
+                    </div>
+                    <Button className="w-full sm:w-auto" onClick={() => setIsNewPublicOpen(true)}>
+                        + New Public Conversation
+                    </Button>
                 </div>
 
                 {/* Conversations Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredConversations.map((conv) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {filteredConversations.map(conv => (
                         <div
                             key={conv.id}
                             onClick={() => goToConversation(conv.id)}
-                            className="cursor-pointer bg-surface border border-border rounded-lg p-4 hover:bg-surface-dark  transition-all duration-200"
+                            className="cursor-pointer bg-surface border border-border rounded-lg p-4 hover:bg-surface-dark transition-all duration-200 flex flex-col justify-between"
                         >
-                            <div className="flex justify-between items-center mb-2">
-                                <h3 className="font-semibold text-text truncate flex-1">
-                                    {conv.name || "Unnamed conversation"}
-                                </h3>
-                                <span className="text-sm text-text-muted ml-2 flex items-center gap-1">
-                                    👁 {conv.views ?? 0}
-                                </span>
-                            </div>
+                            <div className="mb-2">
+                                <div className="flex justify-between items-start mb-1 gap-2">
+                                    <h3 className="font-semibold text-text truncate flex-1">
+                                        {conv.name || "Unnamed conversation"}
+                                    </h3>
+                                    <span className="text-xs text-text-muted flex-shrink-0 flex items-center gap-1">
+                                        👁 {conv.views ?? 0}
+                                    </span>
+                                </div>
 
-                            <p className="text-sm text-muted mb-3">
-                                Created by <span className="text-accent-blue-light">{conv.createdBy?.username || "Anonymous"}</span>
-                            </p>
+                                <p className="text-xs sm:text-sm text-text-muted mb-2 truncate">
+                                    Created by <span className="text-accent-blue-light">{conv.createdBy?.username || "Anonymous"}</span>
+                                </p>
 
-                            {conv.messages?.[0] && (
-                                <div className="bg-surface-dark rounded p-2 mb-3">
-                                    <p className="text-sm text-text line-clamp-2">
+                                {conv.messages?.[0] && (
+                                    <div className="bg-surface-dark rounded p-2 mb-2 text-xs sm:text-sm line-clamp-2">
                                         <strong className="text-accent-green">
                                             {conv.messages[0].sender?.username || "Unknown"}:
                                         </strong>{" "}
                                         {conv.messages[0].text || ""}
-                                    </p>
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                            </div>
 
-                            <div className="flex gap-4 text-xs text-[var(--color-text-muted)] pt-2 border-t border-[var(--color-border-dark)]">
+                            <div className="flex flex-wrap gap-4 text-xs text-text-muted pt-2 border-t border-border-dark">
                                 <span className="flex items-center gap-1">
                                     👥 {conv._count?.users ?? 0} members
                                 </span>
@@ -115,15 +101,15 @@ export const PublicConversationList = () => {
 
                 {/* Load More Button */}
                 {hasMore && (
-                    <div className="flex justify-center mt-8">
+                    <div className="flex justify-center mt-6">
                         <button
                             onClick={loadMore}
                             disabled={loading}
-                            className="px-6 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] hover:bg-[var(--color-surface-dark)] hover:border-[var(--color-accent-cyan)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                            className="px-6 py-3 bg-surface border border-border rounded-lg text-text hover:bg-surface-dark hover:border-accent-cyan disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 w-full sm:w-auto"
                         >
                             {loading ? (
-                                <span className="flex items-center gap-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--color-accent-cyan)]"></div>
+                                <span className="flex items-center justify-center gap-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-cyan"></div>
                                     Loading...
                                 </span>
                             ) : (
@@ -133,6 +119,16 @@ export const PublicConversationList = () => {
                     </div>
                 )}
             </div>
+
+            {/* New Public Conversation Modal */}
+            <NewConversationModal
+                token={token!}
+                isOpen={isNewPublicOpen}
+                onClose={() => setIsNewPublicOpen(false)}
+                onCreated={handleCreatedConversation}
+                allUsers={[]} // No user selection for public
+                forcePublic={true}
+            />
         </motion.div>
     );
 };

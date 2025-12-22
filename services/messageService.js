@@ -96,24 +96,18 @@ export const messageService = {
         });
     },
     async sendMessageWithAutoJoin({ conversationId, senderId, text }) {
-        console.log("🚀 sendMessageWithAutoJoin called", { conversationId, senderId, text });
 
         // 1. Fetch conversation
         const conversation = await conversationService.getConversationById(conversationId);
         if (!conversation) {
-            console.log("❌ Conversation not found", conversationId);
             throw new Error("Conversation not found");
         }
-        console.log("✅ Conversation fetched", conversation.id, "isPublic:", conversation.isPublic);
 
         // 2. Auto-join public conversation if user is not a member
         let membership = await conversationService.getUserMembership(senderId, conversationId);
-        console.log("🔍 Current membership:", membership);
 
         if (!membership && conversation.isPublic) {
-            console.log("👤 User not in conversation — adding...");
             membership = await conversationService.addMember(conversationId, senderId);
-            console.log("✅ Membership created:", membership);
 
             // Create system message
             const sysMessage = await this.createSystemMessage(
@@ -121,20 +115,17 @@ export const messageService = {
                 `${membership.user.username} joined the conversation.`,
                 SYSTEM_ID
             );
-            console.log("📢 System message created:", sysMessage.id);
         }
 
         // 3. Get participant IDs
         const participants = await conversationService.getConversationUsers(conversationId);
         const participantIds = participants.map(u => u.userId);
-        console.log("👥 Participant IDs:", participantIds);
 
         // 4. Create message with receipts
         const message = await this.createMessageWithReceipts(
             { text, senderId, conversationId },
             participantIds
         );
-        console.log("💬 Message created with receipts:", message.id);
 
         return message;
     },

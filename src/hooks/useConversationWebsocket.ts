@@ -8,11 +8,13 @@ const WS_URL = BASE_URL.replace(/^http/, "ws");
 interface UseConversationWebSocketProps {
     conversationId: number;
     onNewMessage: (message: Message) => void;
+    isPublic?: boolean; // optional flag for public conversations
 }
 
 export const useConversationWebSocket = ({
     conversationId,
-    onNewMessage
+    onNewMessage,
+    isPublic = false
 }: UseConversationWebSocketProps) => {
     const { user } = useUser();
     const wsRef = useRef<WebSocket | null>(null);
@@ -21,7 +23,7 @@ export const useConversationWebSocket = ({
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
     useEffect(() => {
-        if (!conversationId || !user) return;
+        if (!conversationId) return;
 
         const ws = new WebSocket(WS_URL);
         wsRef.current = ws;
@@ -29,102 +31,105 @@ export const useConversationWebSocket = ({
         ws.onopen = () => {
             ws.send(JSON.stringify({
                 type: "join_conversation",
-                userId: user.id,
-                conversationId
+                conversationId,
+                userId: user?.id || null,
+                username: user?.username || "Guest"
             }));
 
-            // Mark user as online
-            ws.send(JSON.stringify({
-                type: "presence",
-                userId: user.id,
-                online: true
-            }));
+            // Mark user as online if logged in
+            if (!isPublic && user) {
+                ws.send(JSON.stringify({
+                    type: "presence",
+                    userId: user.id,
+                    online: true
+                }));
+            }
         };
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
 
-            // Handle incoming chat messages
-            if (data.type === "chat") {
-                // if (data.message.sender.id === user.id) return; // Skip own messages
-                onNewMessage(data.message);
+            switch (data.type) {
+                case "chat":
+                    onNewMessage(data.message);
+                    break;
+
+                case "typing":
+                    if (data.userId === user?.id) return; // ignore self
+                    setTypingUsers(prev => prev.includes(data.username) ? prev : [...prev, data.username]);
+
+                    // Clear previous timeout
+                    const prevTimeout = typingTimeouts.current.get(data.username);
+                    if (prevTimeout) clearTimeout(prevTimeout);
+
+                    // Remove typing indicator after 2s
+                    const timeout = setTimeout(() => {
+                        setTypingUsers(prev => prev.filter(u => u !== data.username));
+                        typingTimeouts.current.delete(data.username);
+                    }, 2000);
+                    typingTimeouts.current.set(data.username, timeout);
+                    break;
+
+                case "presence_init":
+                    if (!isPublic) {
+                        setOnlineUsers(new Set(data.users));
+                    }
+                    break;
+
+                case "presence":
+                    if (!isPublic) {
+                        setOnlineUsers(prev => {
+                            const newSet = new Set(prev);
+                            if (data.online) newSet.add(data.userId);
+                            else newSet.delete(data.userId);
+                            return newSet;
+                        });
+                    }
+                    break;
             }
-
-            // Handle typing indicators
-            if (data.type === "typing" && data.userId !== user.id) {
-                setTypingUsers(prev => {
-                    if (!prev.includes(data.username)) return [...prev, data.username];
-                    return prev;
-                });
-
-                // Clear previous timeout for this user
-                const prevTimeout = typingTimeouts.current.get(data.username);
-                if (prevTimeout) clearTimeout(prevTimeout);
-
-                // Set new timeout to remove typing indicator
-                const timeout = setTimeout(() => {
-                    setTypingUsers(prev => prev.filter(u => u !== data.username));
-                    typingTimeouts.current.delete(data.username);
-                }, 2000);
-
-                typingTimeouts.current.set(data.username, timeout);
-            }
-
-            // Handle presence initialization
-            if (data.type === "presence_init") {
-                setOnlineUsers(new Set(data.users));
-            }
-
-            // Handle presence updates
-            if (data.type === "presence") {
-                setOnlineUsers(prev => {
-                    const newSet = new Set(prev);
-                    if (data.online) newSet.add(data.userId);
-                    else newSet.delete(data.userId);
-                    return newSet;
-                });
-            }
-        };
-
-        ws.onclose = () => {
         };
 
         ws.onerror = (err) => {
-            console.error("⚠️ Conversation WS Error", err);
+            console.error("⚠️ WebSocket Error:", err);
+        };
+
+        ws.onclose = () => {
+            // optionally handle reconnection
         };
 
         return () => {
-            // Clean up all typing timeouts
-            typingTimeouts.current.forEach(timeout => clearTimeout(timeout));
+            // cleanup
+            typingTimeouts.current.forEach(t => clearTimeout(t));
             typingTimeouts.current.clear();
-
             ws.close(1000, "Component unmounting");
             wsRef.current = null;
         };
-    }, [conversationId, user?.id]);
+    }, [conversationId, user?.id, user?.username, isPublic]);
 
-    // Send typing indicator
+    // Send typing indicator (only for logged-in users in private chats)
     const sendTyping = () => {
-        if (wsRef.current?.readyState === WebSocket.OPEN && user) {
-            wsRef.current.send(JSON.stringify({
-                type: "typing",
-                userId: user.id,
-                username: user.username,
-                conversationId
-            }));
-        }
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+        if (!user && !isPublic) return;
+
+        wsRef.current.send(JSON.stringify({
+            type: "typing",
+            conversationId,
+            userId: user?.id || null,
+            username: user?.username || "Guest"
+        }));
     };
 
-    // Send message via WebSocket
+    // Send chat message
     const sendMessage = (text: string) => {
-        if (wsRef.current?.readyState === WebSocket.OPEN && user) {
-            wsRef.current.send(JSON.stringify({
-                type: "message",
-                text,
-                userId: user.id,
-                conversationId
-            }));
-        }
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+        wsRef.current.send(JSON.stringify({
+            type: "message",
+            text,
+            conversationId,
+            userId: user?.id || null,
+            username: user?.username || "Guest"
+        }));
     };
 
     return {

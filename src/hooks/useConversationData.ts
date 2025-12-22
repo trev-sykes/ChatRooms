@@ -28,7 +28,7 @@ export const useConversationData = (isPublic = false, conversationId: number) =>
                     const msgs = await fetchPublicMessages(conversationId);
                     setMessages(msgs);
                     setConversationName("Public Conversation");
-                    setParticipants([]); // Optionally leave empty or fetch public participants if needed
+                    setParticipants([]); // Public conversation has no participants to manage
                 } else {
                     // Private conversation: need token and user
                     if (!token || !user) return;
@@ -38,9 +38,17 @@ export const useConversationData = (isPublic = false, conversationId: number) =>
                         fetchConversationName(conversationId, token, user.id),
                         fetchConversationUsers(conversationId, token),
                     ]);
+
                     setMessages(msgs);
                     setConversationName(name);
-                    setParticipants(users);
+
+                    // Ensure current user is included
+                    const participantIds = users.map((u: any) => u.id);
+                    if (!participantIds.includes(user.id)) {
+                        setParticipants([...users, { ...user, role: "MEMBER" }]);
+                    } else {
+                        setParticipants(users);
+                    }
                 }
             } catch (err) {
                 console.error("Error loading conversation:", err);
@@ -52,13 +60,15 @@ export const useConversationData = (isPublic = false, conversationId: number) =>
         loadConversation();
     }, [isPublic, token, conversationId, user?.id]);
 
+    // Add a message while preventing duplicates
     const addMessage = (message: Message) => {
         setMessages(prev => {
             const exists = prev.some(
                 m =>
-                    m.sender?.id === message.sender?.id &&
-                    m.text === message.text &&
-                    Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 2000
+                    m.id === message.id || // check unique id first
+                    (m.sender?.id === message.sender?.id &&
+                        m.text === message.text &&
+                        Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 2000)
             );
             return exists ? prev : [...prev, message];
         });

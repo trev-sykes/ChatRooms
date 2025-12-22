@@ -113,30 +113,6 @@ export const Conversation: React.FC = () => {
         setNewMessage(""); // clear input immediately
 
         try {
-            // 1️⃣ Send message via REST API (handles auto-join)
-            const res = await fetch(`${BASE_URL}/messages/`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    text: messageText,
-                    conversationId: numericConversationId
-                })
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                console.error("Failed to send message via REST:", err);
-                return;
-            }
-
-            const data = await res.json();
-            console.log("✅ Message sent via REST:", data);
-
-            // 2️⃣ Add message to local state immediately
-            addMessage(data.message);
 
             // 3️⃣ Broadcast via WebSocket (optional, for other clients)
             if (isConnected) {

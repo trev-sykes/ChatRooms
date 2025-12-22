@@ -6,13 +6,13 @@ import { AnimatePresence } from "framer-motion";
 import { createConversation, createPublicConversation } from "../../api/conversations";
 import { Loader } from "../ui/Loader";
 import { UserSearchList } from "../ui/UserSearchList";
-
 interface Props {
     token: string;
     isOpen: boolean;
     onClose: () => void;
     onCreated: (conversation: any) => void;
     allUsers: { id: number; username: string }[];
+    forcePublic?: boolean; // new
 }
 
 export const NewConversationModal: React.FC<Props> = ({
@@ -20,12 +20,13 @@ export const NewConversationModal: React.FC<Props> = ({
     isOpen,
     onClose,
     onCreated,
-    allUsers
+    allUsers,
+    forcePublic = false, // default false
 }) => {
     const [name, setName] = useState("");
     const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
-    const [isPublic, setIsPublic] = useState(false); // <-- new state
+    const [isPublic, setIsPublic] = useState(forcePublic);
 
     const toggleUserSelection = (id: number) => {
         setSelectedUserIds(prev =>
@@ -42,10 +43,8 @@ export const NewConversationModal: React.FC<Props> = ({
         try {
             let conversation;
             if (isPublic) {
-                // Call public conversation API
-                conversation = await createPublicConversation(token, name, selectedUserIds);
+                conversation = await createPublicConversation(token, name, []); // no users needed
             } else {
-                // Call private conversation API
                 conversation = await createConversation(token, selectedUserIds, name);
             }
 
@@ -53,7 +52,7 @@ export const NewConversationModal: React.FC<Props> = ({
             onClose();
             setName("");
             setSelectedUserIds([]);
-            setIsPublic(false);
+            setIsPublic(forcePublic);
         } catch (err: any) {
             alert(err.response?.data?.error || err.message || "Failed to create conversation");
         } finally {
@@ -64,7 +63,7 @@ export const NewConversationModal: React.FC<Props> = ({
     return (
         <AnimatePresence>
             {isOpen && (
-                <Modal isOpen={isOpen} onClose={onClose} title="Create New Conversation">
+                <Modal isOpen={isOpen} onClose={onClose} title={forcePublic ? "Create Public Conversation" : "Create New Conversation"}>
                     <div className="flex flex-col gap-4">
                         <TextInput
                             value={name}
@@ -72,18 +71,20 @@ export const NewConversationModal: React.FC<Props> = ({
                             placeholder="Conversation Name (optional)"
                         />
 
-                        {/* Public checkbox */}
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={isPublic}
-                                onChange={e => setIsPublic(e.target.checked)}
-                            />
-                            Public Conversation
-                        </label>
+                        {/* Only show public checkbox if not forced */}
+                        {!forcePublic && (
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={e => setIsPublic(e.target.checked)}
+                                />
+                                Public Conversation
+                            </label>
+                        )}
 
-                        {/* Show user list only if private */}
-                        {!isPublic && (
+                        {/* Show user list only if private and not forced */}
+                        {!isPublic && !forcePublic && (
                             <UserSearchList
                                 allUsers={allUsers}
                                 selectedUserIds={selectedUserIds}

@@ -85,7 +85,6 @@ export const sendMessage = async (req, res) => {
     try {
         const convId = conversationId ? Number(conversationId) : 1;
 
-        console.log("📩 Sending message:", { userId, convId, text });
 
         // Send message with auto-join logic
         const message = await messageService.sendMessageWithAutoJoin({
@@ -94,7 +93,6 @@ export const sendMessage = async (req, res) => {
             text
         });
 
-        console.log("✅ Message created:", message);
 
         res.json({ message });
     } catch (error) {
