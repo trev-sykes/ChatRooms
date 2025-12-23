@@ -33,7 +33,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 disabled={disabled}
                 className={`
                     w-full px-4 py-3 rounded-xl text-text
-                    bg-white/10 text-text placeholder-text-muted
+                    bg-white/10 text-base text-text placeholder-text-muted
                     backdrop-blur-md outline-none
                     transition-all duration-300
                     border ${error ? "border-accent-red" : "border-surface/30"}
@@ -41,8 +41,6 @@ export const TextInput: React.FC<TextInputProps> = ({
                     focus:border-accent-blue focus:shadow-accent-blue/30
                     ${className || ""}
                 `}
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
             />
             {error && (
                 <motion.span
