@@ -100,7 +100,6 @@ export const Landing: React.FC = () => {
                     >
                         Source Code
                     </a>
-                    • Happy Coding
                 </CardFooter>
             </Card>
         </PageWrapper>
